@@ -385,7 +385,7 @@ export async function addPaymentAction(formData: FormData) {
     }));
   }
 
-  const { error: paymentError } = await supabase.rpc("add_fee_payment", {
+  const { data: paymentRows, error: paymentError } = await supabase.rpc("add_fee_payment", {
     p_student_fee_record_id: recordId,
     p_amount: amount,
     p_payment_date: paymentDate,
@@ -401,6 +401,11 @@ export async function addPaymentAction(formData: FormData) {
   revalidatePath("/admin/fees");
   revalidatePath("/admin/students");
   revalidatePath("/admin/dashboard");
+  const paymentId = Array.isArray(paymentRows) ? paymentRows[0]?.payment_id : null;
+  if (paymentId) {
+    redirect(`/admin/fees/receipts/${paymentId}`);
+  }
+
   redirect(feesRedirectUrl({ page, payment: "success" }));
 }
 

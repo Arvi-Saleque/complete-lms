@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ConfirmForm } from "@/components/admin/confirm-form";
 import { PageHeader } from "@/components/admin/page-header";
+import { PrintButton } from "@/components/admin/print-button";
 import { AccordionItem } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -102,6 +103,15 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
   const saveCustomFields = saveStudentCustomFieldsAction.bind(null, studentRow.id);
   const addNote = addStudentNoteAction.bind(null, studentRow.id);
   const deleteNote = deleteStudentNoteAction.bind(null, studentRow.id);
+  const feeTotals = feeRows.reduce(
+    (totals, fee) => ({
+      amount: totals.amount + Number(fee.amount ?? 0),
+      discount: totals.discount + Number(fee.discount_amount ?? 0),
+      paid: totals.paid + Number(fee.paid_amount ?? 0),
+      due: totals.due + Number(fee.due_amount ?? 0)
+    }),
+    { amount: 0, discount: 0, paid: 0, due: 0 }
+  );
   const examResults = examIds.map((examId) => {
     const examMarks = markRows.filter((mark) => mark.exams?.id === examId);
     const subjectRows = examSubjectRows.filter((subject) => subject.exam_id === examId);
@@ -163,22 +173,81 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
             </tbody>
           </Table>
         </AccordionItem>
-        <AccordionItem title="Fee Records">
+        <AccordionItem title="Fee Statement" defaultOpen>
+          <div className="mb-4 flex flex-wrap gap-2 print-hide">
+            <PrintButton label="Print statement" />
+          </div>
+          <div className="mb-4 grid gap-3 md:grid-cols-4">
+            {[
+              ["Total amount", currency(feeTotals.amount)],
+              ["Total discount", currency(feeTotals.discount)],
+              ["Total paid", currency(feeTotals.paid)],
+              ["Total due", currency(feeTotals.due)]
+            ].map(([label, value]) => (
+              <div className="rounded-md border p-3" key={label}>
+                <p className="text-xs text-muted-foreground">{label}</p>
+                <p className="text-lg font-semibold">{value}</p>
+              </div>
+            ))}
+          </div>
           {feeRows.length ? (
-            <Table>
-              <thead><tr><Th>Fee</Th><Th>Amount</Th><Th>Paid</Th><Th>Due</Th><Th>Status</Th></tr></thead>
-              <tbody>
-                {feeRows.map((fee) => (
-                  <tr key={fee.id}>
-                    <Td>{fee.fee_types?.name}</Td>
-                    <Td>{currency(fee.amount)}</Td>
-                    <Td>{currency(fee.paid_amount)}</Td>
-                    <Td>{currency(fee.due_amount)}</Td>
-                    <Td><Badge value={fee.status} /></Td>
+            <div className="space-y-4">
+              <Table>
+                <thead>
+                  <tr>
+                    <Th>Fee</Th>
+                    <Th>Month</Th>
+                    <Th>Amount</Th>
+                    <Th>Discount</Th>
+                    <Th>Paid</Th>
+                    <Th>Due</Th>
+                    <Th>Status</Th>
                   </tr>
-                ))}
-              </tbody>
-            </Table>
+                </thead>
+                <tbody>
+                  {feeRows.map((fee) => (
+                    <tr key={fee.id}>
+                      <Td>{fee.fee_types?.name}</Td>
+                      <Td>{fee.month ?? "-"}</Td>
+                      <Td>{currency(fee.amount)}</Td>
+                      <Td>{currency(fee.discount_amount)}</Td>
+                      <Td>{currency(fee.paid_amount)}</Td>
+                      <Td>{currency(fee.due_amount)}</Td>
+                      <Td><Badge value={fee.status} /></Td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+              <div>
+                <h3 className="mb-2 font-medium">Payment history</h3>
+                <Table>
+                  <thead>
+                    <tr>
+                      <Th>Date</Th>
+                      <Th>Fee</Th>
+                      <Th>Amount</Th>
+                      <Th>Receipt</Th>
+                      <Th>Note</Th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paymentRows.map((payment) => (
+                      <tr key={payment.id}>
+                        <Td>{payment.payment_date}</Td>
+                        <Td>{payment.student_fee_records?.fee_types?.name}</Td>
+                        <Td>{currency(payment.amount)}</Td>
+                        <Td>
+                          <Link className="font-medium text-primary" href={`/admin/fees/receipts/${payment.id}`}>
+                            {payment.receipt_no ?? `R-${String(payment.id).slice(0, 8).toUpperCase()}`}
+                          </Link>
+                        </Td>
+                        <Td>{payment.note ?? "-"}</Td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              </div>
+            </div>
           ) : <EmptyState message="No fee records yet." />}
         </AccordionItem>
         <AccordionItem title="Payment History">
@@ -189,7 +258,11 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
                   <Td>{payment.payment_date}</Td>
                   <Td>{payment.student_fee_records?.fee_types?.name}</Td>
                   <Td>{currency(payment.amount)}</Td>
-                  <Td>{payment.receipt_no ?? "-"}</Td>
+                  <Td>
+                    <Link className="font-medium text-primary" href={`/admin/fees/receipts/${payment.id}`}>
+                      {payment.receipt_no ?? `R-${String(payment.id).slice(0, 8).toUpperCase()}`}
+                    </Link>
+                  </Td>
                 </tr>
               ))}
             </tbody>

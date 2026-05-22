@@ -247,6 +247,7 @@ declare
   next_due numeric(12, 2);
   base_due numeric(12, 2);
   inserted_payment_id uuid;
+  generated_receipt_no text;
 begin
   if not public.is_principal() then
     raise exception 'Only principal users can add payments.';
@@ -281,6 +282,8 @@ begin
     raise exception 'Payment amount cannot exceed current due amount.';
   end if;
 
+  generated_receipt_no := 'R-' || to_char(clock_timestamp(), 'YYYYMMDDHH24MISSMS');
+
   insert into public.payments (
     student_fee_record_id,
     amount,
@@ -294,7 +297,7 @@ begin
     p_amount,
     coalesce(p_payment_date, current_date),
     'cash',
-    null,
+    generated_receipt_no,
     p_note
   )
   returning id into inserted_payment_id;
