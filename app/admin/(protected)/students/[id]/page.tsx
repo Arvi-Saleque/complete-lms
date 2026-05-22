@@ -1,0 +1,261 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { ConfirmForm } from "@/components/admin/confirm-form";
+import { PageHeader } from "@/components/admin/page-header";
+import { AccordionItem } from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty";
+import { Input, Label, Select, Textarea } from "@/components/ui/form";
+import { Table, Td, Th } from "@/components/ui/table";
+import {
+  addStudentNoteAction,
+  deleteStudentNoteAction,
+  saveStudentCustomFieldsAction
+} from "@/lib/actions";
+import { createClient } from "@/lib/supabase/server";
+import { currency } from "@/lib/utils";
+
+export default async function StudentDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
+  const supabase = await createClient();
+  const [
+    { data: student },
+    { data: fees },
+    { data: payments },
+    { data: attendance },
+    { data: marks },
+    { data: customFields },
+    { data: customFieldDefinitions },
+    { data: notes }
+  ] = await Promise.all([
+    supabase
+      .from("students")
+      .select("*,classes(name),sections(name)")
+      .eq("id", resolvedParams.id)
+      .maybeSingle(),
+    supabase
+      .from("student_fee_records")
+      .select("*,fee_types(name)")
+      .eq("student_id", resolvedParams.id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("payments")
+      .select("*,student_fee_records!inner(student_id,fee_types(name))")
+      .eq("student_fee_records.student_id", resolvedParams.id)
+      .order("payment_date", { ascending: false }),
+    supabase
+      .from("attendance_records")
+      .select("*")
+      .eq("student_id", resolvedParams.id)
+      .order("date", { ascending: false })
+      .limit(30),
+    supabase
+      .from("student_marks")
+      .select("*,exams(name),subjects(name)")
+      .eq("student_id", resolvedParams.id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("custom_field_values")
+      .select("field_definition_id,value,custom_field_definitions(label,entity_type)")
+      .eq("entity_id", resolvedParams.id),
+    supabase
+      .from("custom_field_definitions")
+      .select("*")
+      .eq("entity_type", "student")
+      .eq("is_active", true)
+      .order("label"),
+    supabase.from("notes").select("*").eq("student_id", resolvedParams.id).order("created_at", { ascending: false })
+  ]);
+
+  if (!student) notFound();
+  const studentRow = student as any;
+  const feeRows = (fees ?? []) as any[];
+  const paymentRows = (payments ?? []) as any[];
+  const markRows = (marks ?? []) as any[];
+  const customFieldRows = (customFields ?? []) as any[];
+  const customFieldDefinitionRows = (customFieldDefinitions ?? []) as any[];
+  const noteRows = (notes ?? []) as any[];
+  const customValueByField = new Map(
+    customFieldRows.map((field) => [field.field_definition_id, field.value ?? ""])
+  );
+  const saveCustomFields = saveStudentCustomFieldsAction.bind(null, studentRow.id);
+  const addNote = addStudentNoteAction.bind(null, studentRow.id);
+  const deleteNote = deleteStudentNoteAction.bind(null, studentRow.id);
+
+  const attendanceSummary = (attendance ?? []).reduce<Record<string, number>>((acc, row) => {
+    acc[row.status] = (acc[row.status] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  return (
+    <>
+      <PageHeader
+        title={studentRow.name}
+        description={`Roll ${studentRow.roll} • ${studentRow.classes?.name ?? "No class"} • Session ${studentRow.session_year}`}
+        actionHref={`/admin/students/${studentRow.id}/edit`}
+        actionLabel="Edit student"
+      />
+      <div className="space-y-3">
+        <AccordionItem title="Basic Information" defaultOpen>
+          <dl className="grid gap-3 text-sm md:grid-cols-3">
+            <div><dt className="text-muted-foreground">Class</dt><dd>{studentRow.classes?.name ?? "-"}</dd></div>
+            <div><dt className="text-muted-foreground">Section</dt><dd>{studentRow.sections?.name ?? "-"}</dd></div>
+            <div><dt className="text-muted-foreground">Status</dt><dd><Badge value={studentRow.status} /></dd></div>
+            <div><dt className="text-muted-foreground">Father</dt><dd>{studentRow.father_name ?? "-"}</dd></div>
+            <div><dt className="text-muted-foreground">Mother</dt><dd>{studentRow.mother_name ?? "-"}</dd></div>
+            <div><dt className="text-muted-foreground">Phone</dt><dd>{studentRow.guardian_phone ?? "-"}</dd></div>
+            <div className="md:col-span-3"><dt className="text-muted-foreground">Address</dt><dd>{studentRow.address ?? "-"}</dd></div>
+          </dl>
+        </AccordionItem>
+        <AccordionItem title="Hajira / Attendance">
+          <div className="mb-3 flex gap-2 text-sm">
+            {["present", "absent", "late", "leave"].map((status) => (
+              <span key={status} className="rounded-md bg-secondary px-2 py-1 capitalize">
+                {status}: {attendanceSummary[status] ?? 0}
+              </span>
+            ))}
+          </div>
+          <Table>
+            <tbody>
+              {(attendance ?? []).map((row) => (
+                <tr key={row.id}>
+                  <Td>{row.date}</Td>
+                  <Td><Badge value={row.status} /></Td>
+                  <Td>{row.note ?? ""}</Td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </AccordionItem>
+        <AccordionItem title="Fee Records">
+          {feeRows.length ? (
+            <Table>
+              <thead><tr><Th>Fee</Th><Th>Amount</Th><Th>Paid</Th><Th>Due</Th><Th>Status</Th></tr></thead>
+              <tbody>
+                {feeRows.map((fee) => (
+                  <tr key={fee.id}>
+                    <Td>{fee.fee_types?.name}</Td>
+                    <Td>{currency(fee.amount)}</Td>
+                    <Td>{currency(fee.paid_amount)}</Td>
+                    <Td>{currency(fee.due_amount)}</Td>
+                    <Td><Badge value={fee.status} /></Td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          ) : <EmptyState message="No fee records yet." />}
+        </AccordionItem>
+        <AccordionItem title="Payment History">
+          <Table>
+            <tbody>
+              {paymentRows.map((payment) => (
+                <tr key={payment.id}>
+                  <Td>{payment.payment_date}</Td>
+                  <Td>{payment.student_fee_records?.fee_types?.name}</Td>
+                  <Td>{currency(payment.amount)}</Td>
+                  <Td>{payment.receipt_no ?? "-"}</Td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </AccordionItem>
+        <AccordionItem title="Exam Results">
+          <Table>
+            <thead><tr><Th>Exam</Th><Th>Subject</Th><Th>Total</Th><Th>Grade</Th></tr></thead>
+            <tbody>
+              {markRows.map((mark) => (
+                <tr key={mark.id}>
+                  <Td>{mark.exams?.name}</Td>
+                  <Td>{mark.subjects?.name}</Td>
+                  <Td>{mark.total_mark}</Td>
+                  <Td>{mark.grade ?? "-"}</Td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </AccordionItem>
+        <AccordionItem title="Custom Fields">
+          {customFieldDefinitionRows.length ? (
+            <form action={saveCustomFields} className="grid gap-4 md:grid-cols-2">
+              {customFieldDefinitionRows.map((field) => (
+                <div className="space-y-2" key={field.id}>
+                  <Label htmlFor={`custom_${field.id}`}>{field.label}</Label>
+                  {field.field_type === "dropdown" ? (
+                    <Select
+                      id={`custom_${field.id}`}
+                      name={`custom_${field.id}`}
+                      defaultValue={customValueByField.get(field.id) ?? ""}
+                    >
+                      <option value="">Select value</option>
+                      {String(field.options ?? "")
+                        .split(",")
+                        .map((option) => option.trim())
+                        .filter(Boolean)
+                        .map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                    </Select>
+                  ) : (
+                    <Input
+                      id={`custom_${field.id}`}
+                      name={`custom_${field.id}`}
+                      type={
+                        field.field_type === "number"
+                          ? "number"
+                          : field.field_type === "date"
+                            ? "date"
+                            : "text"
+                      }
+                      defaultValue={customValueByField.get(field.id) ?? ""}
+                    />
+                  )}
+                </div>
+              ))}
+              <div className="md:col-span-2">
+                <Button type="submit">Save custom fields</Button>
+              </div>
+            </form>
+          ) : <EmptyState message="No student custom fields defined. Create fields in Admin > Custom Fields first." />}
+        </AccordionItem>
+        <AccordionItem title="Notes">
+          <form action={addNote} className="mb-4 space-y-3">
+            <Textarea name="note" placeholder="Write a note about this student" required />
+            <Button type="submit">Add note</Button>
+          </form>
+          {noteRows.length ? (
+            <div className="space-y-2">
+              {noteRows.map((note) => (
+                <div key={note.id} className="flex items-start justify-between gap-3 rounded-md bg-secondary p-3 text-sm">
+                  <div>
+                    <p>{note.note}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {new Date(note.created_at).toLocaleString("en-BD")}
+                    </p>
+                  </div>
+                  <ConfirmForm
+                    action={deleteNote}
+                    firstMessage="Delete this note?"
+                    secondMessage="Final confirmation: delete this note permanently?"
+                  >
+                    <input name="id" type="hidden" value={note.id} />
+                    <Button size="sm" type="submit" variant="destructive">
+                      Delete
+                    </Button>
+                  </ConfirmForm>
+                </div>
+              ))}
+            </div>
+          ) : <EmptyState message="No notes yet." />}
+        </AccordionItem>
+      </div>
+      <div className="mt-4">
+        <Button asChild variant="outline">
+          <Link href="/admin/students">Back to students</Link>
+        </Button>
+      </div>
+    </>
+  );
+}
