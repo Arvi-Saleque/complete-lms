@@ -16,6 +16,13 @@ function feeStatus(amount: number, discount: number, paid: number) {
   return { due, status: "unpaid" };
 }
 
+const paymentMethods = new Set(["cash", "bkash", "nagad", "bank", "other"]);
+
+function paymentMethodFromForm(value: FormDataEntryValue | null) {
+  const method = String(value ?? "cash").trim().toLowerCase() || "cash";
+  return paymentMethods.has(method) ? method : null;
+}
+
 function feesRedirectUrl(params: Record<string, string | null | undefined>) {
   const searchParams = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
@@ -229,7 +236,7 @@ export async function deleteStudentAction(formData: FormData) {
   const supabase = await createClient();
   const id = String(formData.get("id"));
 
-  const { error } = await supabase.from("students").delete().eq("id", id);
+  const { error } = await supabase.from("students").update({ status: "left" }).eq("id", id);
   if (error) throw new Error(error.message);
 
   revalidatePath("/admin/dashboard");
@@ -237,6 +244,7 @@ export async function deleteStudentAction(formData: FormData) {
   revalidatePath("/admin/fees");
   revalidatePath("/admin/attendance");
   revalidatePath("/admin/results");
+  revalidatePath(`/admin/students/${id}`);
 }
 
 export async function createClassAction(formData: FormData) {
@@ -346,6 +354,10 @@ export async function createFeeRecordAction(formData: FormData) {
   const discount = toNumber(formData.get("discount_amount"));
   const paid = toNumber(formData.get("paid_amount"));
   const computed = feeStatus(amount, discount, 0);
+  const studentId = String(formData.get("student_id"));
+  const feeTypeId = String(formData.get("fee_type_id"));
+  const sessionYear = String(formData.get("session_year") ?? "").trim();
+  const month = emptyToNull(formData.get("month"));
 
   if (amount < 0 || discount < 0 || paid < 0) {
     redirect(feesRedirectUrl({ payment_error: "Fee amounts cannot be negative." }));
@@ -359,17 +371,44 @@ export async function createFeeRecordAction(formData: FormData) {
     redirect(feesRedirectUrl({ payment_error: "Already paid amount cannot exceed current due amount." }));
   }
 
+  const { data: feeType, error: feeTypeError } = await supabase
+    .from("fee_types")
+    .select("category,frequency")
+    .eq("id", feeTypeId)
+    .maybeSingle();
+  if (feeTypeError) throw new Error(feeTypeError.message);
+
+  const allowFlexibleDuplicates =
+    feeType?.category === "other" || feeType?.frequency === "custom";
+
+  if (!allowFlexibleDuplicates) {
+    let duplicateQuery = supabase
+      .from("student_fee_records")
+      .select("id")
+      .eq("student_id", studentId)
+      .eq("fee_type_id", feeTypeId)
+      .eq("session_year", sessionYear)
+      .limit(1);
+
+    duplicateQuery = month ? duplicateQuery.eq("month", month) : duplicateQuery.is("month", null);
+    const { data: duplicateRows, error: duplicateError } = await duplicateQuery;
+    if (duplicateError) throw new Error(duplicateError.message);
+    if (duplicateRows?.length) {
+      redirect("/admin/fees/new?error=duplicate-fee");
+    }
+  }
+
   const { data, error } = await supabase
     .from("student_fee_records")
     .insert({
-      student_id: String(formData.get("student_id")),
-      fee_type_id: String(formData.get("fee_type_id")),
+      student_id: studentId,
+      fee_type_id: feeTypeId,
       amount,
       discount_amount: discount,
       paid_amount: 0,
       due_amount: computed.due,
-      month: emptyToNull(formData.get("month")),
-      session_year: String(formData.get("session_year") ?? "").trim(),
+      month,
+      session_year: sessionYear,
       due_date: emptyToNull(formData.get("due_date")),
       status: computed.status,
       note: emptyToNull(formData.get("note"))
@@ -383,6 +422,7 @@ export async function createFeeRecordAction(formData: FormData) {
       p_student_fee_record_id: data.id,
       p_amount: paid,
       p_payment_date: todayIso(),
+      p_payment_method: "cash",
       p_note: "Initial payment"
     });
     if (paymentError) throw new Error(paymentError.message);
@@ -412,11 +452,19 @@ export async function addPaymentAction(formData: FormData) {
   const amount = toNumber(formData.get("amount"));
   const page = String(formData.get("page") ?? "");
   const paymentDate = emptyToNull(formData.get("payment_date")) ?? todayIso();
+  const paymentMethod = paymentMethodFromForm(formData.get("payment_method"));
 
   if (amount <= 0) {
     redirect(feesRedirectUrl({
       page,
       payment_error: "Payment amount must be greater than 0."
+    }));
+  }
+
+  if (!paymentMethod) {
+    redirect(feesRedirectUrl({
+      page,
+      payment_error: "Payment method must be cash, bkash, nagad, bank, or other."
     }));
   }
 
@@ -450,6 +498,7 @@ export async function addPaymentAction(formData: FormData) {
     p_student_fee_record_id: recordId,
     p_amount: amount,
     p_payment_date: paymentDate,
+    p_payment_method: paymentMethod,
     p_note: emptyToNull(formData.get("note"))
   });
   if (paymentError) {
@@ -637,8 +686,12 @@ export async function saveMarksAction(formData: FormData) {
     .filter(([key]) => key.startsWith("written_"))
     .map(([key]) => {
       const studentId = key.replace("written_", "");
-      const written = toNumber(formData.get(`written_${studentId}`));
-      const oral = toNumber(formData.get(`oral_${studentId}`));
+      const writtenValue = String(formData.get(`written_${studentId}`) ?? "").trim();
+      const oralValue = String(formData.get(`oral_${studentId}`) ?? "").trim();
+      const note = emptyToNull(formData.get(`note_${studentId}`));
+      if (!writtenValue && !oralValue && !note) return null;
+      const written = toNumber(writtenValue);
+      const oral = toNumber(oralValue);
       const total = written + oral;
       return {
         student_id: studentId,
@@ -648,9 +701,10 @@ export async function saveMarksAction(formData: FormData) {
         oral_mark: oral,
         total_mark: total,
         grade: calculateSubjectGrade(total, fullMark, passMark),
-        note: emptyToNull(formData.get(`note_${studentId}`))
+        note
       };
-    });
+    })
+    .filter((row) => row !== null);
 
   if (rows.some((row) => Number(row.written_mark) < 0 || Number(row.oral_mark) < 0)) {
     redirect(resultsRedirectUrl({

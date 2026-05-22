@@ -81,9 +81,14 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
   const feeRows = (fees ?? []) as any[];
   const paymentRows = (payments ?? []) as any[];
   const markRows = (marks ?? []) as any[];
-  const examIds = Array.from(
-    new Set(markRows.map((mark) => mark.exams?.id).filter(Boolean))
-  );
+  const { data: classExams } = await supabase
+    .from("exams")
+    .select("id,name")
+    .eq("class_id", studentRow.class_id)
+    .eq("session_year", studentRow.session_year)
+    .order("start_date", { ascending: false });
+  const examRows = (classExams ?? []) as Array<{ id: string; name: string }>;
+  const examIds = examRows.map((exam) => exam.id);
   const { data: examSubjects } = examIds.length
     ? await supabase
         .from("exam_subjects")
@@ -123,10 +128,10 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
 
     return {
       examId,
-      examName: examMarks[0]?.exams?.name ?? "Exam",
+      examName: examRows.find((exam) => exam.id === examId)?.name ?? "Exam",
       result
     };
-  });
+  }).filter((examResult) => examResult.result);
 
   const attendanceSummary = (attendance ?? []).reduce<Record<string, number>>((acc, row) => {
     acc[row.status] = (acc[row.status] ?? 0) + 1;
@@ -304,8 +309,8 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
                               ? `${formatMark(subject.totalMark)}/${formatMark(subject.fullMark)}`
                               : "-"}
                           </Td>
-                          <Td>{subject.mark ? subject.grade : "-"}</Td>
-                          <Td>{subject.mark ? <Badge value={subject.status.toLowerCase()} /> : "-"}</Td>
+                          <Td>{subject.grade}</Td>
+                          <Td><Badge value={subject.status.toLowerCase()} /></Td>
                         </tr>
                       ))}
                     </tbody>
@@ -337,6 +342,16 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
                             {option}
                           </option>
                         ))}
+                    </Select>
+                  ) : field.field_type === "boolean" ? (
+                    <Select
+                      id={`custom_${field.id}`}
+                      name={`custom_${field.id}`}
+                      defaultValue={customValueByField.get(field.id) ?? ""}
+                    >
+                      <option value="">Select value</option>
+                      <option value="true">Yes</option>
+                      <option value="false">No</option>
                     </Select>
                   ) : (
                     <Input
@@ -372,7 +387,9 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
                   <div>
                     <p>{note.note}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {new Date(note.created_at).toLocaleString("en-BD")}
+                      {new Date(note.created_at).toLocaleString("en-BD", {
+                        timeZone: "Asia/Dhaka"
+                      })}
                     </p>
                   </div>
                   <ConfirmForm

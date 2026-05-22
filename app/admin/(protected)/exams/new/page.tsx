@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label, Select } from "@/components/ui/form";
 import { Table, Td, Th } from "@/components/ui/table";
 import { createExamAction, createSubjectAction, deleteSubjectAction } from "@/lib/actions";
+import { currentBangladeshYear } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function NewExamPage() {
@@ -35,7 +36,7 @@ export default async function NewExamPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="session_year">Session year</Label>
-                <Input id="session_year" name="session_year" required defaultValue={new Date().getFullYear()} />
+                <Input id="session_year" name="session_year" required defaultValue={currentBangladeshYear()} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="start_date">Start date</Label>

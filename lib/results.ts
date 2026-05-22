@@ -31,7 +31,7 @@ export type SubjectResult = {
   totalMark: number;
   percentage: number;
   grade: string;
-  status: "Pass" | "Fail";
+  status: "Pass" | "Fail" | "Not entered";
   mark?: StudentMarkRow;
 };
 
@@ -42,7 +42,7 @@ export type StudentExamResult = {
   totalFullMarks: number;
   percentage: number;
   grade: string;
-  status: "Pass" | "Fail";
+  status: "Pass" | "Fail" | "Incomplete";
   position: number | null;
 };
 
@@ -87,11 +87,12 @@ export function calculateExamResults({
       const mark = marksByStudentSubject.get(`${student.id}:${subject.subject_id}`);
       const fullMark = Number(subject.full_mark ?? 0);
       const passMark = Number(subject.pass_mark ?? 0);
+      const hasMark = Boolean(mark);
       const writtenMark = Number(mark?.written_mark ?? 0);
       const oralMark = Number(mark?.oral_mark ?? 0);
       const totalMark = writtenMark + oralMark;
       const percentage = fullMark > 0 ? (totalMark / fullMark) * 100 : 0;
-      const status = totalMark >= passMark ? "Pass" : "Fail";
+      const status = !hasMark ? "Not entered" : totalMark >= passMark ? "Pass" : "Fail";
 
       return {
         subjectId: subject.subject_id,
@@ -102,7 +103,8 @@ export function calculateExamResults({
         oralMark,
         totalMark,
         percentage,
-        grade: status === "Pass" ? gradeFromPercentage(percentage) : "F",
+        grade:
+          status === "Not entered" ? "Not entered" : status === "Pass" ? gradeFromPercentage(percentage) : "F",
         status,
         mark
       } satisfies SubjectResult;
@@ -111,8 +113,10 @@ export function calculateExamResults({
     const totalObtained = subjects.reduce((sum, subject) => sum + subject.totalMark, 0);
     const totalFullMarks = subjects.reduce((sum, subject) => sum + subject.fullMark, 0);
     const percentage = totalFullMarks > 0 ? (totalObtained / totalFullMarks) * 100 : 0;
+    const hasMissingSubject =
+      !subjects.length || subjects.some((subject) => subject.status === "Not entered");
     const failedAnySubject = subjects.some((subject) => subject.status === "Fail");
-    const status = failedAnySubject ? "Fail" : "Pass";
+    const status = hasMissingSubject ? "Incomplete" : failedAnySubject ? "Fail" : "Pass";
 
     return {
       student,
@@ -120,14 +124,17 @@ export function calculateExamResults({
       totalObtained,
       totalFullMarks,
       percentage,
-      grade: status === "Pass" ? gradeFromPercentage(percentage) : "F",
+      grade: status === "Incomplete" ? "Incomplete" : status === "Pass" ? gradeFromPercentage(percentage) : "F",
       status,
       position: null
     } satisfies StudentExamResult;
   });
 
   const sorted = [...results].sort((a, b) => {
-    if (a.status !== b.status) return a.status === "Pass" ? -1 : 1;
+    if (a.status !== b.status) {
+      const order = { Pass: 0, Fail: 1, Incomplete: 2 };
+      return order[a.status] - order[b.status];
+    }
     if (b.totalObtained !== a.totalObtained) return b.totalObtained - a.totalObtained;
     return a.student.roll.localeCompare(b.student.roll, undefined, { numeric: true });
   });
@@ -136,7 +143,7 @@ export function calculateExamResults({
   let previousRank = 0;
   let passedIndex = 0;
   sorted.forEach((result) => {
-    if (result.status === "Fail") {
+    if (result.status !== "Pass") {
       result.position = null;
       return;
     }

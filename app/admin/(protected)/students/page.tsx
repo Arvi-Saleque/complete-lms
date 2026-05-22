@@ -104,16 +104,18 @@ export default async function StudentsPage({
                         <Button asChild size="sm" variant="outline">
                           <Link href={`/admin/students/${student.id}`}>Details</Link>
                         </Button>
-                        <ConfirmForm
-                          action={deleteStudentAction}
-                          firstMessage={`Delete student ${student.name}? Related fees, attendance, marks, and notes will also be removed.`}
-                          secondMessage="Final confirmation: delete this student permanently?"
-                        >
-                          <input name="id" type="hidden" value={student.id} />
-                          <Button size="sm" type="submit" variant="destructive">
-                            Delete
-                          </Button>
-                        </ConfirmForm>
+                        {student.status !== "left" ? (
+                          <ConfirmForm
+                            action={deleteStudentAction}
+                            firstMessage={`Mark ${student.name} as left? Fees, payments, attendance, marks, and notes will be kept.`}
+                            secondMessage="Final confirmation: mark this student as left?"
+                          >
+                            <input name="id" type="hidden" value={student.id} />
+                            <Button size="sm" type="submit" variant="outline">
+                              Mark left
+                            </Button>
+                          </ConfirmForm>
+                        ) : null}
                       </div>
                     </Td>
                   </tr>

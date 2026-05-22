@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select, Textarea } from "@/components/ui/form";
+import { currentBangladeshYear } from "@/lib/utils";
 
 const months = [
   "January",
@@ -106,7 +107,7 @@ export function FeeRecordForm({
       </div>
       <div className="space-y-2">
         <Label htmlFor="session_year">Session year</Label>
-        <Input id="session_year" name="session_year" required defaultValue={new Date().getFullYear()} />
+        <Input id="session_year" name="session_year" required defaultValue={currentBangladeshYear()} />
       </div>
       <div className="space-y-2">
         <Label htmlFor="due_date">Due date</Label>

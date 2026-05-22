@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select, Textarea } from "@/components/ui/form";
 import { studentStatuses } from "@/lib/options";
+import { currentBangladeshYear } from "@/lib/utils";
 import Link from "next/link";
 
 type StudentFormProps = {
@@ -112,7 +113,7 @@ export function StudentForm({
           id="session_year"
           name="session_year"
           required
-          defaultValue={student?.session_year ?? new Date().getFullYear()}
+          defaultValue={student?.session_year ?? currentBangladeshYear()}
         />
       </div>
       <div className="space-y-2">

@@ -233,6 +233,7 @@ create or replace function public.add_fee_payment(
   p_student_fee_record_id uuid,
   p_amount numeric,
   p_payment_date date,
+  p_payment_method text default 'cash',
   p_note text default null
 )
 returns table (
@@ -260,6 +261,11 @@ begin
 
   if p_amount is null or p_amount <= 0 then
     raise exception 'Payment amount must be greater than 0.';
+  end if;
+
+  p_payment_method := coalesce(nullif(lower(trim(p_payment_method)), ''), 'cash');
+  if p_payment_method not in ('cash', 'bkash', 'nagad', 'bank', 'other') then
+    raise exception 'Payment method must be cash, bkash, nagad, bank, or other.';
   end if;
 
   select *
@@ -301,7 +307,7 @@ begin
     p_student_fee_record_id,
     p_amount,
     coalesce(p_payment_date, current_date),
-    'cash',
+    p_payment_method,
     generated_receipt_no,
     p_note
   )
@@ -338,7 +344,7 @@ begin
 end;
 $$;
 
-grant execute on function public.add_fee_payment(uuid, numeric, date, text) to authenticated;
+grant execute on function public.add_fee_payment(uuid, numeric, date, text, text) to authenticated;
 
 alter table public.profiles enable row level security;
 alter table public.classes enable row level security;

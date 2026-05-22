@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { addDaysIso, todayIso } from "@/lib/utils";
 
 const demoSession = "DEMO-2026";
 const demoPrefix = "Demo - ";
@@ -102,9 +103,7 @@ function chunk<T>(items: T[], size = 100) {
 }
 
 function dateOffset(days: number) {
-  const date = new Date();
-  date.setDate(date.getDate() + days);
-  return date.toISOString().slice(0, 10);
+  return addDaysIso(todayIso(), days);
 }
 
 function gradeFor(total: number) {

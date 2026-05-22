@@ -5,6 +5,7 @@ import { PrintButton } from "@/components/admin/print-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, Td } from "@/components/ui/table";
+import { institution } from "@/lib/institution";
 import { createClient } from "@/lib/supabase/server";
 import { currency } from "@/lib/utils";
 
@@ -55,7 +56,13 @@ export default async function PaymentReceiptPage({
 
       <Card className="mx-auto max-w-3xl">
         <CardHeader className="border-b text-center">
-          <CardTitle className="text-2xl">Madrasa Name Placeholder</CardTitle>
+          <CardTitle className="text-2xl">{institution.name}</CardTitle>
+          {institution.address ? (
+            <p className="text-sm text-muted-foreground">{institution.address}</p>
+          ) : null}
+          {institution.phone ? (
+            <p className="text-sm text-muted-foreground">{institution.phone}</p>
+          ) : null}
           <p className="text-sm text-muted-foreground">Official payment receipt</p>
         </CardHeader>
         <CardContent className="space-y-5 p-6">

@@ -287,6 +287,13 @@ export default async function FeesPage({
                             type="number"
                           />
                           <Input name="payment_date" type="date" defaultValue={todayIso()} required />
+                          <Select name="payment_method" defaultValue="cash">
+                            <option value="cash">Cash</option>
+                            <option value="bkash">bKash</option>
+                            <option value="nagad">Nagad</option>
+                            <option value="bank">Bank</option>
+                            <option value="other">Other</option>
+                          </Select>
                           <Textarea className="col-span-2 min-h-16" name="note" placeholder="Note" />
                           <PendingButton className="col-span-2" pendingLabel="Saving..." size="sm" type="submit">
                             Add payment

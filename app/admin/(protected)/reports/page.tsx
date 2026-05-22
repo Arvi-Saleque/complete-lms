@@ -5,28 +5,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Select } from "@/components/ui/form";
 import { Table, Td, Th } from "@/components/ui/table";
 import { createClient } from "@/lib/supabase/server";
-import { currency, todayIso } from "@/lib/utils";
-
-function addDays(date: Date, days: number) {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-  return next;
-}
-
-function iso(date: Date) {
-  return date.toISOString().slice(0, 10);
-}
+import {
+  addDaysIso,
+  bangladeshDateRangeToUtc,
+  currency,
+  monthRangeIso,
+  todayIso
+} from "@/lib/utils";
 
 function rangeFor(period: string, dateText: string) {
-  const date = new Date(`${dateText}T00:00:00`);
   if (period === "weekly") {
-    const start = addDays(date, -date.getDay());
-    return { start: iso(start), end: iso(addDays(start, 6)), label: "Weekly" };
+    const date = new Date(`${dateText}T12:00:00+06:00`);
+    const start = addDaysIso(dateText, -date.getUTCDay());
+    return { start, end: addDaysIso(start, 6), label: "Weekly" };
   }
   if (period === "monthly") {
-    const start = new Date(date.getFullYear(), date.getMonth(), 1);
-    const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-    return { start: iso(start), end: iso(end), label: "Monthly" };
+    return { ...monthRangeIso(dateText), label: "Monthly" };
   }
   return { start: dateText, end: dateText, label: "Daily" };
 }
@@ -40,6 +34,7 @@ export default async function ReportsPage({
   const period = resolvedSearchParams.period ?? "daily";
   const date = resolvedSearchParams.date ?? todayIso();
   const range = rangeFor(period, date);
+  const createdAtRange = bangladeshDateRangeToUtc(range.start, range.end);
   const supabase = await createClient();
 
   const [
@@ -63,20 +58,20 @@ export default async function ReportsPage({
     supabase
       .from("student_fee_records")
       .select("amount,paid_amount,due_amount,status,created_at")
-      .gte("created_at", `${range.start}T00:00:00`)
-      .lte("created_at", `${range.end}T23:59:59`),
+      .gte("created_at", createdAtRange.start)
+      .lte("created_at", createdAtRange.end),
     supabase
       .from("student_marks")
       .select("total_mark,grade,created_at,students(name,roll),subjects(name),exams(name)")
-      .gte("created_at", `${range.start}T00:00:00`)
-      .lte("created_at", `${range.end}T23:59:59`)
+      .gte("created_at", createdAtRange.start)
+      .lte("created_at", createdAtRange.end)
       .order("created_at", { ascending: false })
       .limit(50),
     supabase
       .from("students")
       .select("id,name,roll,created_at")
-      .gte("created_at", `${range.start}T00:00:00`)
-      .lte("created_at", `${range.end}T23:59:59`)
+      .gte("created_at", createdAtRange.start)
+      .lte("created_at", createdAtRange.end)
   ]);
 
   const paymentRows = (payments ?? []) as any[];

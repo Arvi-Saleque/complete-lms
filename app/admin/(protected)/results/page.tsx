@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/ui/empty";
 import { Input, Select } from "@/components/ui/form";
 import { Table, Td, Th } from "@/components/ui/table";
 import { saveMarksAction } from "@/lib/actions";
+import { pageFromSearch, rangeForPage } from "@/lib/pagination";
 import { calculateSubjectGrade } from "@/lib/results";
 import { createClient } from "@/lib/supabase/server";
 
@@ -22,9 +23,8 @@ export default async function ResultsPage({
   }>;
 }) {
   const resolvedSearchParams = await searchParams;
-  const page = Math.max(Number(resolvedSearchParams.page ?? 1), 1);
-  const from = (page - 1) * 20;
-  const to = from + 20;
+  const page = pageFromSearch(resolvedSearchParams.page);
+  const { from, to } = rangeForPage(page);
   const supabase = await createClient();
   const [{ data: exams }, { data: exam }, { data: examSubjects }, { data: subjects }] = await Promise.all([
     supabase.from("exams").select("id,name,classes(name)").order("start_date", { ascending: false }),
@@ -181,11 +181,11 @@ export default async function ResultsPage({
                       <tr key={student.id}>
                         <Td>{student.roll}</Td>
                         <Td className="font-medium">{student.name}</Td>
-                        <Td><Input name={`written_${student.id}`} type="number" min="0" max={fullMark} defaultValue={existing?.written_mark ?? 0} /></Td>
-                        <Td><Input name={`oral_${student.id}`} type="number" min="0" max={fullMark} defaultValue={existing?.oral_mark ?? 0} /></Td>
+                        <Td><Input name={`written_${student.id}`} type="number" min="0" max={fullMark} defaultValue={existing?.written_mark ?? ""} placeholder="0" /></Td>
+                        <Td><Input name={`oral_${student.id}`} type="number" min="0" max={fullMark} defaultValue={existing?.oral_mark ?? ""} placeholder="0" /></Td>
                         <Td>{existing ? total : "-"}</Td>
                         <Td>{existing ? autoGrade : "After save"}</Td>
-                        <Td>{existing ? <Badge value={status} /> : "-"}</Td>
+                        <Td>{existing ? <Badge value={status} /> : <Badge value="not entered" />}</Td>
                         <Td><Input name={`note_${student.id}`} defaultValue={existing?.note ?? ""} /></Td>
                       </tr>
                     );
