@@ -3,7 +3,19 @@ import { StudentForm } from "@/components/admin/student-form";
 import { createStudentAction } from "@/lib/actions";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function NewStudentPage() {
+function studentFormError(code?: string) {
+  if (code === "section-class-mismatch") {
+    return "The selected section does not belong to the selected class. Please choose a section from that class.";
+  }
+  return undefined;
+}
+
+export default async function NewStudentPage({
+  searchParams
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
   const [{ data: classes }, { data: sections }] = await Promise.all([
     supabase.from("classes").select("id,name").eq("is_active", true).order("sort_order"),
@@ -17,6 +29,7 @@ export default async function NewStudentPage() {
         action={createStudentAction}
         classes={classes ?? []}
         sections={sections ?? []}
+        error={studentFormError(resolvedSearchParams.error)}
         submitLabel="Create student"
       />
     </>

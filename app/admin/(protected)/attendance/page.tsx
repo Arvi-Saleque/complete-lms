@@ -1,5 +1,6 @@
+import { AttendanceFilterForm } from "@/components/admin/attendance-filter-form";
 import { PageHeader } from "@/components/admin/page-header";
-import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/admin/pending-button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input, Select } from "@/components/ui/form";
 import { Table, Td, Th } from "@/components/ui/table";
@@ -11,49 +12,85 @@ import { todayIso } from "@/lib/utils";
 export default async function AttendancePage({
   searchParams
 }: {
-  searchParams: Promise<{ class?: string; date?: string; page?: string }>;
+  searchParams: Promise<{ class?: string; section?: string; date?: string }>;
 }) {
   const resolvedSearchParams = await searchParams;
-  const page = Math.max(Number(resolvedSearchParams.page ?? 1), 1);
-  const from = (page - 1) * 20;
-  const to = from + 20;
   const supabase = await createClient();
   const date = resolvedSearchParams.date ?? todayIso();
-  const [{ data: classes }, { data: students }, { data: records }] = await Promise.all([
+  const selectedClassId = resolvedSearchParams.class ?? "";
+  const requestedSectionId = resolvedSearchParams.section ?? "";
+
+  const [{ data: classes }, { data: sections }] = await Promise.all([
     supabase.from("classes").select("id,name").eq("is_active", true).order("sort_order"),
-    resolvedSearchParams.class
-      ? supabase
-          .from("students")
-          .select("id,name,roll")
-          .eq("class_id", resolvedSearchParams.class)
-          .eq("status", "active")
-          .order("roll")
-          .range(from, to)
-      : Promise.resolve({ data: [] }),
-    resolvedSearchParams.class
-      ? supabase.from("attendance_records").select("*").eq("date", date)
-      : Promise.resolve({ data: [] })
+    supabase.from("sections").select("id,name,class_id").eq("is_active", true).order("name")
   ]);
+  const selectedSectionId =
+    (sections ?? []).some(
+      (section) => section.id === requestedSectionId && section.class_id === selectedClassId
+    )
+      ? requestedSectionId
+      : "";
+
+  let studentQuery = selectedClassId
+    ? supabase
+        .from("students")
+        .select("id,name,roll,section_id")
+        .eq("class_id", selectedClassId)
+        .eq("status", "active")
+        .order("roll")
+    : null;
+
+  if (studentQuery && selectedSectionId) {
+    studentQuery = studentQuery.eq("section_id", selectedSectionId);
+  }
+
+  const { data: students } = studentQuery ? await studentQuery : { data: [] };
+  const studentIds = (students ?? []).map((student) => student.id);
+  const { data: records } = studentIds.length
+    ? await supabase
+        .from("attendance_records")
+        .select("*")
+        .eq("date", date)
+        .in("student_id", studentIds)
+    : { data: [] };
 
   const byStudent = new Map((records ?? []).map((row) => [row.student_id, row]));
+  const selectedClass = (classes ?? []).find((item) => item.id === selectedClassId);
+  const selectedSection = (sections ?? []).find((item) => item.id === selectedSectionId);
 
   return (
     <>
       <PageHeader title="Edit Hajira / Attendance" description="Mark or update daily attendance by class and date." />
       <Card className="mb-4">
         <CardContent className="pt-4">
-          <form className="grid gap-3 md:grid-cols-4">
-            <Select name="class" required defaultValue={resolvedSearchParams.class ?? ""}>
-              <option value="">Select class</option>
-              {(classes ?? []).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-            </Select>
-            <Input name="date" type="date" defaultValue={date} />
-            <input name="page" type="hidden" value="1" />
-            <Button type="submit">Load students</Button>
-          </form>
+          <AttendanceFilterForm
+            classes={classes ?? []}
+            date={date}
+            sections={sections ?? []}
+            selectedClassId={selectedClassId}
+            selectedSectionId={selectedSectionId}
+          />
         </CardContent>
       </Card>
-      {resolvedSearchParams.class ? (
+
+      {!selectedClassId ? (
+        <Card>
+          <CardContent className="p-6 text-sm text-muted-foreground">
+            Select a class and date to load the attendance sheet.
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {selectedClassId && !(students ?? []).length ? (
+        <Card>
+          <CardContent className="p-6 text-sm text-muted-foreground">
+            No active students found for {selectedClass?.name ?? "this class"}
+            {selectedSection ? `, section ${selectedSection.name}` : ""}.
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {selectedClassId && (students ?? []).length ? (
         <form action={saveAttendanceAction}>
           <input type="hidden" name="date" value={date} />
           <Card>
@@ -83,9 +120,12 @@ export default async function AttendancePage({
                 </tbody>
               </Table>
               <div className="p-4">
-                <Button type="submit">Save attendance</Button>
+                <PendingButton pendingLabel="Saving attendance..." type="submit">
+                  Save attendance
+                </PendingButton>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Showing students {from + 1}-{Math.min(to, from + (students ?? []).length)}. Use class sections for smaller sheets.
+                  Showing all {(students ?? []).length} active students for {selectedClass?.name ?? "the selected class"}
+                  {selectedSection ? `, section ${selectedSection.name}` : ""}.
                 </p>
               </div>
             </CardContent>

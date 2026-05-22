@@ -1,3 +1,6 @@
+"use client";
+
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select, Textarea } from "@/components/ui/form";
 import { studentStatuses } from "@/lib/options";
@@ -9,6 +12,7 @@ type StudentFormProps = {
   sections: Array<{ id: string; name: string; class_id: string }>;
   student?: Record<string, any>;
   submitLabel: string;
+  error?: string;
 };
 
 export function StudentForm({
@@ -16,14 +20,34 @@ export function StudentForm({
   classes,
   sections,
   student,
-  submitLabel
+  submitLabel,
+  error
 }: StudentFormProps) {
-  const distinctSections = Array.from(
-    new Map(sections.map((item) => [item.name.toLowerCase(), item])).values()
-  ).sort((a, b) => a.name.localeCompare(b.name));
+  const initialClassId = student?.class_id ?? "";
+  const initialSectionId =
+    student?.section_id &&
+    sections.some(
+      (section) => section.id === student.section_id && section.class_id === initialClassId
+    )
+      ? student.section_id
+      : "";
+  const [selectedClassId, setSelectedClassId] = useState(initialClassId);
+  const [selectedSectionId, setSelectedSectionId] = useState(initialSectionId);
+  const classSections = useMemo(
+    () =>
+      sections
+        .filter((section) => section.class_id === selectedClassId)
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [sections, selectedClassId]
+  );
 
   return (
     <form action={action} className="grid gap-4 rounded-lg border bg-card p-4 md:grid-cols-2">
+      {error ? (
+        <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 md:col-span-2">
+          {error}
+        </div>
+      ) : null}
       <div className="space-y-2">
         <Label htmlFor="name">Student name</Label>
         <Input id="name" name="name" required defaultValue={student?.name ?? ""} />
@@ -34,7 +58,20 @@ export function StudentForm({
       </div>
       <div className="space-y-2">
         <Label htmlFor="class_id">Class</Label>
-        <Select id="class_id" name="class_id" required defaultValue={student?.class_id ?? ""}>
+        <Select
+          id="class_id"
+          name="class_id"
+          required
+          value={selectedClassId}
+          onChange={(event) => {
+            const nextClassId = event.target.value;
+            setSelectedClassId(nextClassId);
+            const currentSection = sections.find((section) => section.id === selectedSectionId);
+            if (!currentSection || currentSection.class_id !== nextClassId) {
+              setSelectedSectionId("");
+            }
+          }}
+        >
           <option value="">Select class</option>
           {classes.map((item) => (
             <option key={item.id} value={item.id}>
@@ -54,10 +91,16 @@ export function StudentForm({
       </div>
       <div className="space-y-2">
         <Label htmlFor="section_id">Section</Label>
-        <Select id="section_id" name="section_id" defaultValue={student?.section_id ?? ""}>
+        <Select
+          id="section_id"
+          name="section_id"
+          value={selectedSectionId}
+          onChange={(event) => setSelectedSectionId(event.target.value)}
+          disabled={!selectedClassId || !classSections.length}
+        >
           <option value="">No section</option>
-          {distinctSections.map((item) => (
-            <option key={item.name} value={item.id}>
+          {classSections.map((item) => (
+            <option key={item.id} value={item.id}>
               {item.name}
             </option>
           ))}

@@ -13,7 +13,19 @@ import {
 } from "@/lib/actions";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function ClassesSettingsPage() {
+function settingsError(code?: string) {
+  if (code === "section-exists") {
+    return "That section already exists for the selected class. Use a different section name for that class.";
+  }
+  return undefined;
+}
+
+export default async function ClassesSettingsPage({
+  searchParams
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
   const [{ data: classes }, { data: sections }] = await Promise.all([
     supabase.from("classes").select("*").order("sort_order"),
@@ -22,6 +34,7 @@ export default async function ClassesSettingsPage() {
 
   const classRows = (classes ?? []) as any[];
   const sectionRows = (sections ?? []) as any[];
+  const error = settingsError(resolvedSearchParams.error);
 
   return (
     <>
@@ -29,6 +42,11 @@ export default async function ClassesSettingsPage() {
         title="Classes & Sections"
         description="Create classes first, then add sections. Students depend on these records."
       />
+      {error ? (
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {error}
+        </div>
+      ) : null}
       <div className="grid gap-4 xl:grid-cols-[380px_1fr]">
         <div className="space-y-4">
           <Card>

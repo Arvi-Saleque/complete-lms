@@ -14,6 +14,24 @@ function feeStatus(amount: number, discount: number, paid: number) {
   return { due, status: "unpaid" };
 }
 
+async function sectionBelongsToClass(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  classId: string,
+  sectionId: string | null
+) {
+  if (!sectionId) return true;
+
+  const { data, error } = await supabase
+    .from("sections")
+    .select("id")
+    .eq("id", sectionId)
+    .eq("class_id", classId)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return Boolean(data);
+}
+
 export async function loginAction(formData: FormData) {
   const supabase = await createClient();
   const email = String(formData.get("email") ?? "");
@@ -64,12 +82,18 @@ export async function deleteDemoPresetAction() {
 export async function createStudentAction(formData: FormData) {
   await requirePrincipal();
   const supabase = await createClient();
+  const classId = String(formData.get("class_id"));
+  const sectionId = emptyToNull(formData.get("section_id"));
+
+  if (!(await sectionBelongsToClass(supabase, classId, sectionId))) {
+    redirect("/admin/students/new?error=section-class-mismatch");
+  }
 
   const payload = {
     name: String(formData.get("name") ?? "").trim(),
     roll: String(formData.get("roll") ?? "").trim(),
-    class_id: String(formData.get("class_id")),
-    section_id: emptyToNull(formData.get("section_id")),
+    class_id: classId,
+    section_id: sectionId,
     session_year: String(formData.get("session_year") ?? "").trim(),
     father_name: emptyToNull(formData.get("father_name")),
     mother_name: emptyToNull(formData.get("mother_name")),
@@ -89,12 +113,18 @@ export async function createStudentAction(formData: FormData) {
 export async function updateStudentAction(id: string, formData: FormData) {
   await requirePrincipal();
   const supabase = await createClient();
+  const classId = String(formData.get("class_id"));
+  const sectionId = emptyToNull(formData.get("section_id"));
+
+  if (!(await sectionBelongsToClass(supabase, classId, sectionId))) {
+    redirect(`/admin/students/${id}/edit?error=section-class-mismatch`);
+  }
 
   const payload = {
     name: String(formData.get("name") ?? "").trim(),
     roll: String(formData.get("roll") ?? "").trim(),
-    class_id: String(formData.get("class_id")),
-    section_id: emptyToNull(formData.get("section_id")),
+    class_id: classId,
+    section_id: sectionId,
     session_year: String(formData.get("session_year") ?? "").trim(),
     father_name: emptyToNull(formData.get("father_name")),
     mother_name: emptyToNull(formData.get("mother_name")),
@@ -159,21 +189,23 @@ export async function deleteClassAction(formData: FormData) {
 export async function createSectionAction(formData: FormData) {
   await requirePrincipal();
   const supabase = await createClient();
+  const classId = String(formData.get("class_id"));
   const name = String(formData.get("name") ?? "").trim();
 
-  const { data: existing } = await supabase
+  const { data: existing, error: existingError } = await supabase
     .from("sections")
     .select("id")
+    .eq("class_id", classId)
     .ilike("name", name)
     .limit(1);
+  if (existingError) throw new Error(existingError.message);
 
   if (existing?.length) {
-    revalidatePath("/admin/settings/classes");
-    return;
+    redirect("/admin/settings/classes?error=section-exists");
   }
 
   const { error } = await supabase.from("sections").insert({
-    class_id: String(formData.get("class_id")),
+    class_id: classId,
     name,
     is_active: formData.get("is_active") === "on"
   });
