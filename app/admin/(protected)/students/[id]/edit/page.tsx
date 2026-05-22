@@ -8,6 +8,9 @@ function studentFormError(code?: string) {
   if (code === "section-class-mismatch") {
     return "The selected section does not belong to the selected class. Please choose a section from that class.";
   }
+  if (code === "roll-exists") {
+    return "Roll number already exists for this class, section, and session.";
+  }
   return undefined;
 }
 

@@ -113,3 +113,4 @@ npm run build
 - `node_modules`, `.next`, build output, and `.vercel` are ignored.
 - Demo seed data lives in code, but demo controls are hidden unless `ENABLE_DEMO_TOOLS=true`.
 - Use Fee Types for money-related fields. Custom Fields are for non-money metadata only.
+- Roll numbers are unique per class, section, and session. The same roll may exist in another section of the same class/session.

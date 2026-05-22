@@ -54,6 +54,33 @@ async function sectionBelongsToClass(
   return Boolean(data);
 }
 
+async function studentRollExists(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  roll: string,
+  classId: string,
+  sectionId: string | null,
+  sessionYear: string,
+  excludeStudentId?: string
+) {
+  let query = supabase
+    .from("students")
+    .select("id")
+    .eq("roll", roll)
+    .eq("class_id", classId)
+    .eq("session_year", sessionYear)
+    .limit(1);
+
+  query = sectionId ? query.eq("section_id", sectionId) : query.is("section_id", null);
+
+  if (excludeStudentId) {
+    query = query.neq("id", excludeStudentId);
+  }
+
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return Boolean(data?.length);
+}
+
 export async function loginAction(formData: FormData) {
   const supabase = await createClient();
   const email = String(formData.get("email") ?? "");
@@ -133,6 +160,18 @@ export async function createStudentAction(formData: FormData) {
     status: String(formData.get("status") ?? "active")
   };
 
+  if (
+    await studentRollExists(
+      supabase,
+      payload.roll,
+      payload.class_id,
+      payload.section_id,
+      payload.session_year
+    )
+  ) {
+    redirect("/admin/students/new?error=roll-exists");
+  }
+
   const { error } = await supabase.from("students").insert(payload);
   if (error) throw new Error(error.message);
 
@@ -163,6 +202,19 @@ export async function updateStudentAction(id: string, formData: FormData) {
     admission_date: emptyToNull(formData.get("admission_date")),
     status: String(formData.get("status") ?? "active")
   };
+
+  if (
+    await studentRollExists(
+      supabase,
+      payload.roll,
+      payload.class_id,
+      payload.section_id,
+      payload.session_year,
+      id
+    )
+  ) {
+    redirect(`/admin/students/${id}/edit?error=roll-exists`);
+  }
 
   const { error } = await supabase.from("students").update(payload).eq("id", id);
   if (error) throw new Error(error.message);

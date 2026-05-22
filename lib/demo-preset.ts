@@ -282,7 +282,7 @@ export async function insertDemoPreset(supabase: SupabaseClient) {
       status: index % 17 === 0 ? "left" : "active"
     };
   });
-  must(await supabase.from("students").upsert(students, { onConflict: "roll,class_id,session_year" }));
+  must(await supabase.from("students").insert(students));
   const studentRows = must(
     await supabase
       .from("students")

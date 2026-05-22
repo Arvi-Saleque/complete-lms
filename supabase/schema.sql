@@ -50,8 +50,7 @@ create table public.students (
   admission_date date,
   status public.student_status not null default 'active',
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  unique (roll, class_id, session_year)
+  updated_at timestamptz not null default now()
 );
 
 create table public.fee_types (
@@ -182,6 +181,12 @@ create table public.notes (
 
 create index students_class_session_idx on public.students(class_id, session_year);
 create index students_status_idx on public.students(status);
+create unique index students_roll_section_session_unique_idx
+  on public.students(roll, class_id, section_id, session_year)
+  where section_id is not null;
+create unique index students_roll_no_section_session_unique_idx
+  on public.students(roll, class_id, session_year)
+  where section_id is null;
 create index fee_records_student_idx on public.student_fee_records(student_id);
 create index fee_records_status_idx on public.student_fee_records(status);
 create index payments_date_idx on public.payments(payment_date);
