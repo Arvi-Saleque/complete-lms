@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, Td, Th } from "@/components/ui/table";
 import { deleteDemoPresetAction, insertDemoPresetAction } from "@/lib/actions";
-import { demoToolsEnabled } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 import { currency, todayIso } from "@/lib/utils";
 
@@ -18,7 +17,6 @@ export default async function DashboardPage({
   const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
   const today = todayIso();
-  const showDemoTools = demoToolsEnabled();
 
   const [
     students,
@@ -85,50 +83,43 @@ export default async function DashboardPage({
         title="Dashboard"
         description="Daily snapshot for students, fees, hajira, and exams."
       />
-      {showDemoTools ? (
-        <Card className="mb-5 border-primary/20">
-          <CardHeader>
-            <CardTitle>Demo preset</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Insert a fresh demo dataset for client review. These buttons delete all school
-              records first, but keep the principal login/profile.
+      <Card className="mb-5 border-primary/20">
+        <CardHeader>
+          <CardTitle>Demo preset</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Insert a fresh demo dataset for client review. These buttons delete all school
+            records first, but keep the principal login/profile.
+          </p>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <ConfirmForm
+            action={insertDemoPresetAction}
+            firstMessage="This will create a fresh demo preset. If any school records already exist, they will be cleared first. Continue?"
+            secondMessage="Final confirmation: insert the fresh demo data now?"
+          >
+            <Button type="submit">Insert fresh demo data</Button>
+          </ConfirmForm>
+          <ConfirmForm
+            action={deleteDemoPresetAction}
+            firstMessage="This will delete all school records. Continue?"
+            secondMessage="Final confirmation: delete all school records now?"
+          >
+            <Button type="submit" variant="destructive">
+              Delete all school data
+            </Button>
+          </ConfirmForm>
+          {resolvedSearchParams.demo === "inserted" ? (
+            <p className="text-sm font-medium text-emerald-700">
+              Demo preset inserted. Check students, fees, attendance, exams, and results.
             </p>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <ConfirmForm
-              action={insertDemoPresetAction}
-              firstMessage="This will create a fresh demo preset. If any school records already exist, they will be cleared first. Continue?"
-              secondMessage="Final confirmation: insert the fresh demo data now?"
-            >
-              <Button type="submit">Insert fresh demo data</Button>
-            </ConfirmForm>
-            <ConfirmForm
-              action={deleteDemoPresetAction}
-              firstMessage="This will delete all school records. Continue?"
-              secondMessage="Final confirmation: delete all school records now?"
-            >
-              <Button type="submit" variant="destructive">
-                Delete all school data
-              </Button>
-            </ConfirmForm>
-            {resolvedSearchParams.demo === "inserted" ? (
-              <p className="text-sm font-medium text-emerald-700">
-                Demo preset inserted. Check students, fees, attendance, exams, and results.
-              </p>
-            ) : null}
-            {resolvedSearchParams.demo === "deleted-all" ? (
-              <p className="text-sm font-medium text-red-700">
-                All school records were deleted. Principal login is still available.
-              </p>
-            ) : null}
-          </CardContent>
-        </Card>
-      ) : null}
-      {resolvedSearchParams.demo === "disabled" ? (
-        <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-          Demo tools are disabled in this environment.
-        </div>
-      ) : null}
+          ) : null}
+          {resolvedSearchParams.demo === "deleted-all" ? (
+            <p className="text-sm font-medium text-red-700">
+              All school records were deleted. Principal login is still available.
+            </p>
+          ) : null}
+        </CardContent>
+      </Card>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         {cards.map(([label, value]) => (
           <Card key={label}>

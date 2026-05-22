@@ -16,7 +16,3 @@ export function supabaseEnv() {
     anonKey: publishableKey ?? "missing-publishable-key"
   };
 }
-
-export function demoToolsEnabled() {
-  return process.env.ENABLE_DEMO_TOOLS === "true";
-}

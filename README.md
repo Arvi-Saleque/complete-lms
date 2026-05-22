@@ -33,14 +33,6 @@ NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-or-anon-key
 ```
 
-Optional local demo tools:
-
-```bash
-ENABLE_DEMO_TOOLS=true
-```
-
-Keep `ENABLE_DEMO_TOOLS` unset or `false` in production unless you intentionally want the destructive demo insert/delete controls visible.
-
 3. Run the development server:
 
 ```bash
@@ -89,8 +81,6 @@ NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-or-anon-key
 ```
 
-Do not add `ENABLE_DEMO_TOOLS=true` in production unless the client explicitly needs the demo preset buttons.
-
 4. Deploy.
 5. In Supabase Auth settings, add your deployed Vercel URL to allowed redirect/site URLs if needed.
 6. Confirm the principal user can log in at:
@@ -111,6 +101,6 @@ npm run build
 
 - `.env.local` is ignored by git.
 - `node_modules`, `.next`, build output, and `.vercel` are ignored.
-- Demo seed data lives in code, but demo controls are hidden unless `ENABLE_DEMO_TOOLS=true`.
+- Demo seed data lives in code. The dashboard preset buttons always require two confirmations before changing data.
 - Use Fee Types for money-related fields. Custom Fields are for non-money metadata only.
 - Roll numbers are unique per class, section, and session. The same roll may exist in another section of the same class/session.

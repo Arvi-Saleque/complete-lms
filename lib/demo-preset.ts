@@ -406,7 +406,7 @@ export async function insertDemoPreset(supabase: SupabaseClient) {
       student_fee_record_id: record.id,
       amount: record.paid_amount,
       payment_date: dateOffset(-(index % 21)),
-      payment_method: index % 3 === 0 ? "cash" : index % 3 === 1 ? "bkash" : "bank",
+      payment_method: "cash",
       receipt_no: `DEMO-R-${String(index + 1).padStart(4, "0")}`,
       note: "Demo receipt"
     }));

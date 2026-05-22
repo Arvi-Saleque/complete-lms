@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requirePrincipal } from "@/lib/auth";
 import { deleteAllSchoolData, insertDemoPreset } from "@/lib/demo-preset";
-import { demoToolsEnabled } from "@/lib/env";
 import { calculateSubjectGrade } from "@/lib/results";
 import { createClient } from "@/lib/supabase/server";
 import { emptyToNull, todayIso, toNumber } from "@/lib/utils";
@@ -14,13 +13,6 @@ function feeStatus(amount: number, discount: number, paid: number) {
   if (due <= 0) return { due, status: "paid" };
   if (paid > 0) return { due, status: "partial" };
   return { due, status: "unpaid" };
-}
-
-const paymentMethods = new Set(["cash", "bkash", "nagad", "bank", "other"]);
-
-function paymentMethodFromForm(value: FormDataEntryValue | null) {
-  const method = String(value ?? "cash").trim().toLowerCase() || "cash";
-  return paymentMethods.has(method) ? method : null;
 }
 
 function feesRedirectUrl(params: Record<string, string | null | undefined>) {
@@ -109,9 +101,6 @@ export async function logoutAction() {
 
 export async function insertDemoPresetAction() {
   await requirePrincipal();
-  if (!demoToolsEnabled()) {
-    redirect("/admin/dashboard?demo=disabled");
-  }
 
   const supabase = await createClient();
   await insertDemoPreset(supabase);
@@ -127,9 +116,6 @@ export async function insertDemoPresetAction() {
 
 export async function deleteDemoPresetAction() {
   await requirePrincipal();
-  if (!demoToolsEnabled()) {
-    redirect("/admin/dashboard?demo=disabled");
-  }
 
   const supabase = await createClient();
   await deleteAllSchoolData(supabase);
@@ -422,7 +408,6 @@ export async function createFeeRecordAction(formData: FormData) {
       p_student_fee_record_id: data.id,
       p_amount: paid,
       p_payment_date: todayIso(),
-      p_payment_method: "cash",
       p_note: "Initial payment"
     });
     if (paymentError) throw new Error(paymentError.message);
@@ -452,19 +437,11 @@ export async function addPaymentAction(formData: FormData) {
   const amount = toNumber(formData.get("amount"));
   const page = String(formData.get("page") ?? "");
   const paymentDate = emptyToNull(formData.get("payment_date")) ?? todayIso();
-  const paymentMethod = paymentMethodFromForm(formData.get("payment_method"));
 
   if (amount <= 0) {
     redirect(feesRedirectUrl({
       page,
       payment_error: "Payment amount must be greater than 0."
-    }));
-  }
-
-  if (!paymentMethod) {
-    redirect(feesRedirectUrl({
-      page,
-      payment_error: "Payment method must be cash, bkash, nagad, bank, or other."
     }));
   }
 
@@ -498,7 +475,6 @@ export async function addPaymentAction(formData: FormData) {
     p_student_fee_record_id: recordId,
     p_amount: amount,
     p_payment_date: paymentDate,
-    p_payment_method: paymentMethod,
     p_note: emptyToNull(formData.get("note"))
   });
   if (paymentError) {
