@@ -5,13 +5,23 @@ import { redirect } from "next/navigation";
 import { requirePrincipal } from "@/lib/auth";
 import { deleteAllSchoolData, insertDemoPreset } from "@/lib/demo-preset";
 import { createClient } from "@/lib/supabase/server";
-import { emptyToNull, toNumber } from "@/lib/utils";
+import { emptyToNull, todayIso, toNumber } from "@/lib/utils";
 
 function feeStatus(amount: number, discount: number, paid: number) {
   const due = Math.max(amount - discount - paid, 0);
   if (due <= 0) return { due, status: "paid" };
   if (paid > 0) return { due, status: "partial" };
   return { due, status: "unpaid" };
+}
+
+function feesRedirectUrl(params: Record<string, string | null | undefined>) {
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value) searchParams.set(key, value);
+  });
+
+  const query = searchParams.toString();
+  return query ? `/admin/fees?${query}` : "/admin/fees";
 }
 
 async function sectionBelongsToClass(
@@ -263,22 +273,48 @@ export async function createFeeRecordAction(formData: FormData) {
   const amount = toNumber(formData.get("amount"));
   const discount = toNumber(formData.get("discount_amount"));
   const paid = toNumber(formData.get("paid_amount"));
-  const computed = feeStatus(amount, discount, paid);
+  const computed = feeStatus(amount, discount, 0);
 
-  const { error } = await supabase.from("student_fee_records").insert({
-    student_id: String(formData.get("student_id")),
-    fee_type_id: String(formData.get("fee_type_id")),
-    amount,
-    discount_amount: discount,
-    paid_amount: paid,
-    due_amount: computed.due,
-    month: emptyToNull(formData.get("month")),
-    session_year: String(formData.get("session_year") ?? "").trim(),
-    due_date: emptyToNull(formData.get("due_date")),
-    status: computed.status,
-    note: emptyToNull(formData.get("note"))
-  });
+  if (amount < 0 || discount < 0 || paid < 0) {
+    redirect(feesRedirectUrl({ payment_error: "Fee amounts cannot be negative." }));
+  }
+
+  if (discount > amount) {
+    redirect(feesRedirectUrl({ payment_error: "Discount cannot exceed fee amount." }));
+  }
+
+  if (paid > computed.due) {
+    redirect(feesRedirectUrl({ payment_error: "Already paid amount cannot exceed current due amount." }));
+  }
+
+  const { data, error } = await supabase
+    .from("student_fee_records")
+    .insert({
+      student_id: String(formData.get("student_id")),
+      fee_type_id: String(formData.get("fee_type_id")),
+      amount,
+      discount_amount: discount,
+      paid_amount: 0,
+      due_amount: computed.due,
+      month: emptyToNull(formData.get("month")),
+      session_year: String(formData.get("session_year") ?? "").trim(),
+      due_date: emptyToNull(formData.get("due_date")),
+      status: computed.status,
+      note: emptyToNull(formData.get("note"))
+    })
+    .select("id")
+    .single();
   if (error) throw new Error(error.message);
+
+  if (paid > 0) {
+    const { error: paymentError } = await supabase.rpc("add_fee_payment", {
+      p_student_fee_record_id: data.id,
+      p_amount: paid,
+      p_payment_date: todayIso(),
+      p_note: "Initial payment"
+    });
+    if (paymentError) throw new Error(paymentError.message);
+  }
 
   revalidatePath("/admin/fees");
   redirect("/admin/fees");
@@ -302,43 +338,59 @@ export async function addPaymentAction(formData: FormData) {
   const supabase = await createClient();
   const recordId = String(formData.get("student_fee_record_id"));
   const amount = toNumber(formData.get("amount"));
+  const page = String(formData.get("page") ?? "");
+  const paymentDate = emptyToNull(formData.get("payment_date")) ?? todayIso();
+
+  if (amount <= 0) {
+    redirect(feesRedirectUrl({
+      page,
+      payment_error: "Payment amount must be greater than 0."
+    }));
+  }
 
   const { data: record, error: recordError } = await supabase
     .from("student_fee_records")
-    .select("amount, discount_amount, paid_amount")
+    .select("id,due_amount,status")
     .eq("id", recordId)
     .single();
-  if (recordError) throw new Error(recordError.message);
+  if (recordError || !record) {
+    redirect(feesRedirectUrl({
+      page,
+      payment_error: "Fee record was not found."
+    }));
+  }
 
-  const nextPaid = Number(record.paid_amount ?? 0) + amount;
-  const computed = feeStatus(
-    Number(record.amount ?? 0),
-    Number(record.discount_amount ?? 0),
-    nextPaid
-  );
+  if (record.status === "paid" || Number(record.due_amount ?? 0) <= 0) {
+    redirect(feesRedirectUrl({
+      page,
+      payment_error: "This fee record is already fully paid."
+    }));
+  }
 
-  const { error: paymentError } = await supabase.from("payments").insert({
-    student_fee_record_id: recordId,
-    amount,
-    payment_date: String(formData.get("payment_date")),
-    payment_method: "cash",
-    receipt_no: null,
-    note: emptyToNull(formData.get("note"))
+  if (amount > Number(record.due_amount ?? 0)) {
+    redirect(feesRedirectUrl({
+      page,
+      payment_error: "Payment amount cannot exceed current due amount."
+    }));
+  }
+
+  const { error: paymentError } = await supabase.rpc("add_fee_payment", {
+    p_student_fee_record_id: recordId,
+    p_amount: amount,
+    p_payment_date: paymentDate,
+    p_note: emptyToNull(formData.get("note"))
   });
-  if (paymentError) throw new Error(paymentError.message);
-
-  const { error: updateError } = await supabase
-    .from("student_fee_records")
-    .update({
-      paid_amount: nextPaid,
-      due_amount: computed.due,
-      status: computed.status
-    })
-    .eq("id", recordId);
-  if (updateError) throw new Error(updateError.message);
+  if (paymentError) {
+    redirect(feesRedirectUrl({
+      page,
+      payment_error: paymentError.message
+    }));
+  }
 
   revalidatePath("/admin/fees");
   revalidatePath("/admin/students");
+  revalidatePath("/admin/dashboard");
+  redirect(feesRedirectUrl({ page, payment: "success" }));
 }
 
 export async function saveAttendanceAction(formData: FormData) {

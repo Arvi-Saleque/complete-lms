@@ -224,6 +224,114 @@ as $$
   );
 $$;
 
+create or replace function public.add_fee_payment(
+  p_student_fee_record_id uuid,
+  p_amount numeric,
+  p_payment_date date,
+  p_note text default null
+)
+returns table (
+  payment_id uuid,
+  paid_amount numeric,
+  due_amount numeric,
+  fee_status public.fee_status
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  fee_record public.student_fee_records%rowtype;
+  current_paid numeric(12, 2);
+  next_paid numeric(12, 2);
+  next_due numeric(12, 2);
+  base_due numeric(12, 2);
+  inserted_payment_id uuid;
+begin
+  if not public.is_principal() then
+    raise exception 'Only principal users can add payments.';
+  end if;
+
+  if p_amount is null or p_amount <= 0 then
+    raise exception 'Payment amount must be greater than 0.';
+  end if;
+
+  select *
+  into fee_record
+  from public.student_fee_records
+  where id = p_student_fee_record_id
+  for update;
+
+  if not found then
+    raise exception 'Fee record was not found.';
+  end if;
+
+  select coalesce(sum(amount), 0)
+  into current_paid
+  from public.payments
+  where student_fee_record_id = p_student_fee_record_id;
+
+  base_due := greatest(fee_record.amount - fee_record.discount_amount - current_paid, 0);
+
+  if base_due <= 0 then
+    raise exception 'This fee record is already fully paid.';
+  end if;
+
+  if p_amount > base_due then
+    raise exception 'Payment amount cannot exceed current due amount.';
+  end if;
+
+  insert into public.payments (
+    student_fee_record_id,
+    amount,
+    payment_date,
+    payment_method,
+    receipt_no,
+    note
+  )
+  values (
+    p_student_fee_record_id,
+    p_amount,
+    coalesce(p_payment_date, current_date),
+    'cash',
+    null,
+    p_note
+  )
+  returning id into inserted_payment_id;
+
+  select coalesce(sum(amount), 0)
+  into next_paid
+  from public.payments
+  where student_fee_record_id = p_student_fee_record_id;
+
+  next_due := greatest(fee_record.amount - fee_record.discount_amount - next_paid, 0);
+
+  update public.student_fee_records
+  set
+    paid_amount = next_paid,
+    due_amount = next_due,
+    status = case
+      when next_due <= 0 then 'paid'::public.fee_status
+      when next_paid > 0 then 'partial'::public.fee_status
+      else 'unpaid'::public.fee_status
+    end
+  where id = p_student_fee_record_id;
+
+  return query
+  select
+    inserted_payment_id,
+    next_paid,
+    next_due,
+    case
+      when next_due <= 0 then 'paid'::public.fee_status
+      when next_paid > 0 then 'partial'::public.fee_status
+      else 'unpaid'::public.fee_status
+    end;
+end;
+$$;
+
+grant execute on function public.add_fee_payment(uuid, numeric, date, text) to authenticated;
+
 alter table public.profiles enable row level security;
 alter table public.classes enable row level security;
 alter table public.sections enable row level security;
