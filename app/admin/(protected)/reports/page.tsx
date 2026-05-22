@@ -176,6 +176,9 @@ export default async function ReportsPage({
                     <Td>{currency(payment.amount)}</Td>
                   </tr>
                 ))}
+                {!paymentRows.length ? (
+                  <tr><Td colSpan={4}>No payments found for this period.</Td></tr>
+                ) : null}
               </tbody>
             </Table>
           </CardContent>
@@ -198,6 +201,9 @@ export default async function ReportsPage({
                     <Td>{mark.grade ?? "-"}</Td>
                   </tr>
                 ))}
+                {!markRows.length ? (
+                  <tr><Td colSpan={5}>No marks found for this period.</Td></tr>
+                ) : null}
               </tbody>
             </Table>
           </CardContent>

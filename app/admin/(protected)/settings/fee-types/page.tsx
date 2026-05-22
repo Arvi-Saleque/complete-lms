@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/admin/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty";
 import { Input, Label, Select, Textarea } from "@/components/ui/form";
 import { Table, Td, Th } from "@/components/ui/table";
 import { createFeeTypeAction, deleteFeeTypeAction } from "@/lib/actions";
@@ -90,6 +91,11 @@ export default async function FeeTypesPage() {
                 ))}
               </tbody>
             </Table>
+            {!(feeTypes ?? []).length ? (
+              <div className="p-6">
+                <EmptyState message="No fee types yet. Add the first fee type from the form." />
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       </div>

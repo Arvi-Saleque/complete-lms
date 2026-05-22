@@ -135,6 +135,22 @@ export default async function ResultsPage({
         </div>
       ) : null}
 
+      {!resolvedSearchParams.exam ? (
+        <Card>
+          <CardContent className="p-6">
+            <EmptyState message="Select an exam and subject to load the marks entry sheet." />
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {resolvedSearchParams.exam && !availableSubjects.length ? (
+        <Card>
+          <CardContent className="p-6">
+            <EmptyState message="No subjects are assigned to this exam yet. Open the exam setup page and assign subjects first." />
+          </CardContent>
+        </Card>
+      ) : null}
+
       {resolvedSearchParams.exam && resolvedSearchParams.subject ? (
         <form action={saveMarksAction}>
           <input type="hidden" name="exam_id" value={resolvedSearchParams.exam} />

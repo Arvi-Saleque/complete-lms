@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requirePrincipal } from "@/lib/auth";
 import { deleteAllSchoolData, insertDemoPreset } from "@/lib/demo-preset";
+import { demoToolsEnabled } from "@/lib/env";
 import { calculateSubjectGrade } from "@/lib/results";
 import { createClient } from "@/lib/supabase/server";
 import { emptyToNull, todayIso, toNumber } from "@/lib/utils";
@@ -74,6 +75,10 @@ export async function logoutAction() {
 
 export async function insertDemoPresetAction() {
   await requirePrincipal();
+  if (!demoToolsEnabled()) {
+    redirect("/admin/dashboard?demo=disabled");
+  }
+
   const supabase = await createClient();
   await insertDemoPreset(supabase);
 
@@ -88,6 +93,10 @@ export async function insertDemoPresetAction() {
 
 export async function deleteDemoPresetAction() {
   await requirePrincipal();
+  if (!demoToolsEnabled()) {
+    redirect("/admin/dashboard?demo=disabled");
+  }
+
   const supabase = await createClient();
   await deleteAllSchoolData(supabase);
 

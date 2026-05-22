@@ -3,6 +3,7 @@ import { ConfirmForm } from "@/components/admin/confirm-form";
 import { PageHeader } from "@/components/admin/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty";
 import { Table, Td, Th } from "@/components/ui/table";
 import { deleteExamAction } from "@/lib/actions";
 import { createClient } from "@/lib/supabase/server";
@@ -54,6 +55,11 @@ export default async function ExamsPage() {
               ))}
             </tbody>
           </Table>
+          {!examRows.length ? (
+            <div className="p-6">
+              <EmptyState message="No exams yet. Create an exam, then assign subjects and enter marks." />
+            </div>
+          ) : null}
         </CardContent>
       </Card>
     </>

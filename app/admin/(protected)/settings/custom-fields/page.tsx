@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/admin/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty";
 import { Input, Label, Select, Textarea } from "@/components/ui/form";
 import { Table, Td, Th } from "@/components/ui/table";
 import { createCustomFieldAction, deleteCustomFieldAction } from "@/lib/actions";
@@ -87,6 +88,11 @@ export default async function CustomFieldsPage() {
                 ))}
               </tbody>
             </Table>
+            {!(fields ?? []).length ? (
+              <div className="p-6">
+                <EmptyState message="No custom fields yet. Add one only for non-money metadata." />
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       </div>
