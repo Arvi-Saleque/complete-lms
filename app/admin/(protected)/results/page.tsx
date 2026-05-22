@@ -1,18 +1,25 @@
 import { PageHeader } from "@/components/admin/page-header";
+import { PendingButton } from "@/components/admin/pending-button";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty";
 import { Input, Select } from "@/components/ui/form";
 import { Table, Td, Th } from "@/components/ui/table";
 import { saveMarksAction } from "@/lib/actions";
+import { calculateSubjectGrade } from "@/lib/results";
 import { createClient } from "@/lib/supabase/server";
-
-const gradeOptions = ["A+", "A", "A-", "B", "C", "D", "F", "Pass", "Fail"];
 
 export default async function ResultsPage({
   searchParams
 }: {
-  searchParams: Promise<{ exam?: string; subject?: string; page?: string }>;
+  searchParams: Promise<{
+    exam?: string;
+    subject?: string;
+    page?: string;
+    result?: string;
+    result_error?: string;
+  }>;
 }) {
   const resolvedSearchParams = await searchParams;
   const page = Math.max(Number(resolvedSearchParams.page ?? 1), 1);
@@ -25,7 +32,10 @@ export default async function ResultsPage({
       ? supabase.from("exams").select("*,classes(name)").eq("id", resolvedSearchParams.exam).maybeSingle()
       : Promise.resolve({ data: null }),
     resolvedSearchParams.exam
-      ? supabase.from("exam_subjects").select("subject_id,subjects(id,name)").eq("exam_id", resolvedSearchParams.exam)
+      ? supabase
+          .from("exam_subjects")
+          .select("subject_id,full_mark,pass_mark,subjects(id,name)")
+          .eq("exam_id", resolvedSearchParams.exam)
       : Promise.resolve({ data: [] }),
     supabase.from("subjects").select("id,name").order("name")
   ]);
@@ -56,6 +66,8 @@ export default async function ResultsPage({
   const availableSubjects = examSubjectRows.length
     ? examSubjectRows.map((item) => ({
         id: item.subject_id,
+        fullMark: Number(item.full_mark ?? 0),
+        passMark: Number(item.pass_mark ?? 0),
         name: Array.isArray(item.subjects)
           ? item.subjects[0]?.name
           : item.subjects?.name
@@ -63,10 +75,23 @@ export default async function ResultsPage({
     : subjectRows;
   const selectedExam = resolvedSearchParams.exam;
   const selectedSubject = resolvedSearchParams.subject;
+  const selectedExamSubject = examSubjectRows.find((item) => item.subject_id === selectedSubject);
+  const fullMark = Number(selectedExamSubject?.full_mark ?? 0);
+  const passMark = Number(selectedExamSubject?.pass_mark ?? 0);
 
   return (
     <>
       <PageHeader title="Edit Results / Marks Entry" description="Select an exam and subject, then enter marks for active students in that exam class." />
+      {resolvedSearchParams.result === "saved" ? (
+        <div className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
+          Marks saved. Total, grade, and pass/fail are calculated automatically.
+        </div>
+      ) : null}
+      {resolvedSearchParams.result_error ? (
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {resolvedSearchParams.result_error}
+        </div>
+      ) : null}
       <Card className="mb-4">
         <CardContent className="pt-4">
           <form className="grid gap-3 md:grid-cols-4">
@@ -114,29 +139,37 @@ export default async function ResultsPage({
         <form action={saveMarksAction}>
           <input type="hidden" name="exam_id" value={resolvedSearchParams.exam} />
           <input type="hidden" name="subject_id" value={resolvedSearchParams.subject} />
+          <input type="hidden" name="page" value={String(page)} />
           <Card>
             <CardContent className="p-0">
               <Table>
-                <thead><tr><Th>Roll</Th><Th>Name</Th><Th>Written</Th><Th>Oral</Th><Th>Grade</Th><Th>Note</Th></tr></thead>
+                <thead>
+                  <tr>
+                    <Th>Roll</Th>
+                    <Th>Name</Th>
+                    <Th>Written</Th>
+                    <Th>Oral</Th>
+                    <Th>Total</Th>
+                    <Th>Auto grade</Th>
+                    <Th>Result</Th>
+                    <Th>Note</Th>
+                  </tr>
+                </thead>
               <tbody>
                   {(students ?? []).map((student) => {
                     const existing = markByStudent.get(student.id);
+                    const total = Number(existing?.total_mark ?? 0);
+                    const autoGrade = calculateSubjectGrade(total, fullMark, passMark);
+                    const status = total >= passMark ? "pass" : "fail";
                     return (
                       <tr key={student.id}>
                         <Td>{student.roll}</Td>
                         <Td className="font-medium">{student.name}</Td>
-                        <Td><Input name={`written_${student.id}`} type="number" min="0" defaultValue={existing?.written_mark ?? 0} /></Td>
-                        <Td><Input name={`oral_${student.id}`} type="number" min="0" defaultValue={existing?.oral_mark ?? 0} /></Td>
-                        <Td>
-                          <Select name={`grade_${student.id}`} defaultValue={existing?.grade ?? ""}>
-                            <option value="">No grade</option>
-                            {gradeOptions.map((grade) => (
-                              <option key={grade} value={grade}>
-                                {grade}
-                              </option>
-                            ))}
-                          </Select>
-                        </Td>
+                        <Td><Input name={`written_${student.id}`} type="number" min="0" max={fullMark} defaultValue={existing?.written_mark ?? 0} /></Td>
+                        <Td><Input name={`oral_${student.id}`} type="number" min="0" max={fullMark} defaultValue={existing?.oral_mark ?? 0} /></Td>
+                        <Td>{existing ? total : "-"}</Td>
+                        <Td>{existing ? autoGrade : "After save"}</Td>
+                        <Td>{existing ? <Badge value={status} /> : "-"}</Td>
                         <Td><Input name={`note_${student.id}`} defaultValue={existing?.note ?? ""} /></Td>
                       </tr>
                     );
@@ -144,7 +177,14 @@ export default async function ResultsPage({
                 </tbody>
               </Table>
               {(students ?? []).length ? (
-                <div className="p-4"><Button type="submit">Save marks</Button></div>
+                <div className="p-4">
+                  <PendingButton pendingLabel="Saving marks..." type="submit">
+                    Save marks
+                  </PendingButton>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Full mark: {fullMark}. Minimum pass mark: {passMark}. Grade is calculated after saving.
+                  </p>
+                </div>
               ) : (
                 <div className="p-4">
                   <EmptyState

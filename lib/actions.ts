@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requirePrincipal } from "@/lib/auth";
 import { deleteAllSchoolData, insertDemoPreset } from "@/lib/demo-preset";
+import { calculateSubjectGrade } from "@/lib/results";
 import { createClient } from "@/lib/supabase/server";
 import { emptyToNull, todayIso, toNumber } from "@/lib/utils";
 
@@ -22,6 +23,16 @@ function feesRedirectUrl(params: Record<string, string | null | undefined>) {
 
   const query = searchParams.toString();
   return query ? `/admin/fees?${query}` : "/admin/fees";
+}
+
+function resultsRedirectUrl(params: Record<string, string | null | undefined>) {
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value) searchParams.set(key, value);
+  });
+
+  const query = searchParams.toString();
+  return query ? `/admin/results?${query}` : "/admin/results";
 }
 
 async function sectionBelongsToClass(
@@ -535,23 +546,63 @@ export async function saveMarksAction(formData: FormData) {
   const supabase = await createClient();
   const examId = String(formData.get("exam_id"));
   const subjectId = String(formData.get("subject_id"));
+  const page = String(formData.get("page") ?? "1");
+
+  const { data: examSubject, error: examSubjectError } = await supabase
+    .from("exam_subjects")
+    .select("full_mark,pass_mark")
+    .eq("exam_id", examId)
+    .eq("subject_id", subjectId)
+    .maybeSingle();
+
+  if (examSubjectError) throw new Error(examSubjectError.message);
+  if (!examSubject) {
+    redirect(resultsRedirectUrl({
+      exam: examId,
+      subject: subjectId,
+      page,
+      result_error: "This subject is not assigned to the selected exam."
+    }));
+  }
+
+  const fullMark = Number(examSubject.full_mark ?? 0);
+  const passMark = Number(examSubject.pass_mark ?? 0);
   const rows = Array.from(formData.entries())
     .filter(([key]) => key.startsWith("written_"))
     .map(([key]) => {
       const studentId = key.replace("written_", "");
       const written = toNumber(formData.get(`written_${studentId}`));
       const oral = toNumber(formData.get(`oral_${studentId}`));
+      const total = written + oral;
       return {
         student_id: studentId,
         exam_id: examId,
         subject_id: subjectId,
         written_mark: written,
         oral_mark: oral,
-        total_mark: written + oral,
-        grade: emptyToNull(formData.get(`grade_${studentId}`)),
+        total_mark: total,
+        grade: calculateSubjectGrade(total, fullMark, passMark),
         note: emptyToNull(formData.get(`note_${studentId}`))
       };
     });
+
+  if (rows.some((row) => Number(row.written_mark) < 0 || Number(row.oral_mark) < 0)) {
+    redirect(resultsRedirectUrl({
+      exam: examId,
+      subject: subjectId,
+      page,
+      result_error: "Marks cannot be negative."
+    }));
+  }
+
+  if (rows.some((row) => Number(row.total_mark) > fullMark)) {
+    redirect(resultsRedirectUrl({
+      exam: examId,
+      subject: subjectId,
+      page,
+      result_error: "Written and oral marks cannot exceed the subject full mark."
+    }));
+  }
 
   if (rows.length) {
     const { error } = await supabase
@@ -561,6 +612,9 @@ export async function saveMarksAction(formData: FormData) {
   }
 
   revalidatePath("/admin/results");
+  revalidatePath(`/admin/exams/${examId}/results`);
+  revalidatePath("/admin/students");
+  redirect(resultsRedirectUrl({ exam: examId, subject: subjectId, page, result: "saved" }));
 }
 
 export async function createCustomFieldAction(formData: FormData) {

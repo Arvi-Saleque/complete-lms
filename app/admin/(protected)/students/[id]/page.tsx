@@ -13,6 +13,13 @@ import {
   deleteStudentNoteAction,
   saveStudentCustomFieldsAction
 } from "@/lib/actions";
+import {
+  calculateExamResults,
+  formatMark,
+  formatPercentage,
+  type ExamSubjectRow,
+  type StudentMarkRow
+} from "@/lib/results";
 import { createClient } from "@/lib/supabase/server";
 import { currency } from "@/lib/utils";
 
@@ -52,7 +59,7 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
       .limit(30),
     supabase
       .from("student_marks")
-      .select("*,exams(name),subjects(name)")
+      .select("*,exams(id,name),subjects(name)")
       .eq("student_id", resolvedParams.id)
       .order("created_at", { ascending: false }),
     supabase
@@ -73,6 +80,19 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
   const feeRows = (fees ?? []) as any[];
   const paymentRows = (payments ?? []) as any[];
   const markRows = (marks ?? []) as any[];
+  const examIds = Array.from(
+    new Set(markRows.map((mark) => mark.exams?.id).filter(Boolean))
+  );
+  const { data: examSubjects } = examIds.length
+    ? await supabase
+        .from("exam_subjects")
+        .select("exam_id,subject_id,full_mark,pass_mark,subjects(name,code)")
+        .in("exam_id", examIds)
+    : { data: [] };
+  const examSubjectRows = ((examSubjects ?? []) as any[]).map((subject) => ({
+    ...subject,
+    subjects: Array.isArray(subject.subjects) ? subject.subjects[0] : subject.subjects
+  })) as Array<ExamSubjectRow & { exam_id: string }>;
   const customFieldRows = (customFields ?? []) as any[];
   const customFieldDefinitionRows = (customFieldDefinitions ?? []) as any[];
   const noteRows = (notes ?? []) as any[];
@@ -82,6 +102,21 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
   const saveCustomFields = saveStudentCustomFieldsAction.bind(null, studentRow.id);
   const addNote = addStudentNoteAction.bind(null, studentRow.id);
   const deleteNote = deleteStudentNoteAction.bind(null, studentRow.id);
+  const examResults = examIds.map((examId) => {
+    const examMarks = markRows.filter((mark) => mark.exams?.id === examId);
+    const subjectRows = examSubjectRows.filter((subject) => subject.exam_id === examId);
+    const result = calculateExamResults({
+      students: [{ id: studentRow.id, name: studentRow.name, roll: studentRow.roll }],
+      examSubjects: subjectRows,
+      marks: examMarks as StudentMarkRow[]
+    })[0];
+
+    return {
+      examId,
+      examName: examMarks[0]?.exams?.name ?? "Exam",
+      result
+    };
+  });
 
   const attendanceSummary = (attendance ?? []).reduce<Record<string, number>>((acc, row) => {
     acc[row.status] = (acc[row.status] ?? 0) + 1;
@@ -161,19 +196,51 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
           </Table>
         </AccordionItem>
         <AccordionItem title="Exam Results">
-          <Table>
-            <thead><tr><Th>Exam</Th><Th>Subject</Th><Th>Total</Th><Th>Grade</Th></tr></thead>
-            <tbody>
-              {markRows.map((mark) => (
-                <tr key={mark.id}>
-                  <Td>{mark.exams?.name}</Td>
-                  <Td>{mark.subjects?.name}</Td>
-                  <Td>{mark.total_mark}</Td>
-                  <Td>{mark.grade ?? "-"}</Td>
-                </tr>
+          {examResults.length ? (
+            <div className="space-y-4">
+              {examResults.map(({ examId, examName, result }) => (
+                <div className="rounded-md border" key={examId}>
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b p-3">
+                    <div>
+                      <p className="font-medium">{examName}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Total {formatMark(result.totalObtained)}/{formatMark(result.totalFullMarks)} - {formatPercentage(result.percentage)} - Grade {result.grade}
+                      </p>
+                    </div>
+                    <Badge value={result.status.toLowerCase()} />
+                  </div>
+                  <Table>
+                    <thead>
+                      <tr>
+                        <Th>Subject</Th>
+                        <Th>Written</Th>
+                        <Th>Oral</Th>
+                        <Th>Total</Th>
+                        <Th>Grade</Th>
+                        <Th>Status</Th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {result.subjects.map((subject) => (
+                        <tr key={subject.subjectId}>
+                          <Td>{subject.subjectName}</Td>
+                          <Td>{subject.mark ? formatMark(subject.writtenMark) : "-"}</Td>
+                          <Td>{subject.mark ? formatMark(subject.oralMark) : "-"}</Td>
+                          <Td>
+                            {subject.mark
+                              ? `${formatMark(subject.totalMark)}/${formatMark(subject.fullMark)}`
+                              : "-"}
+                          </Td>
+                          <Td>{subject.mark ? subject.grade : "-"}</Td>
+                          <Td>{subject.mark ? <Badge value={subject.status.toLowerCase()} /> : "-"}</Td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </div>
               ))}
-            </tbody>
-          </Table>
+            </div>
+          ) : <EmptyState message="No exam results yet." />}
         </AccordionItem>
         <AccordionItem title="Custom Fields">
           {customFieldDefinitionRows.length ? (
