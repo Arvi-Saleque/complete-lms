@@ -9,6 +9,7 @@ import { Input, Select } from "@/components/ui/form";
 import { EmptyState } from "@/components/ui/empty";
 import { Table, Td, Th } from "@/components/ui/table";
 import { deleteStudentAction } from "@/lib/actions";
+import { getAdminTranslator } from "@/lib/i18n-server";
 import { pageFromSearch, rangeForPage } from "@/lib/pagination";
 import { createClient } from "@/lib/supabase/server";
 
@@ -18,6 +19,7 @@ export default async function StudentsPage({
   searchParams: Promise<{ q?: string; class?: string; status?: string; session?: string; page?: string }>;
 }) {
   const resolvedSearchParams = await searchParams;
+  const t = await getAdminTranslator();
   const page = pageFromSearch(resolvedSearchParams.page);
   const { from, to } = rangeForPage(page);
   const supabase = await createClient();
@@ -45,31 +47,31 @@ export default async function StudentsPage({
   return (
     <>
       <PageHeader
-        title="Students"
-        description="Search, filter, and open full student records."
+        title={t("Students")}
+        description={t("Search, filter, and open full student records.")}
         actionHref="/admin/students/new"
-        actionLabel="Add student"
+        actionLabel={t("Add student")}
       />
       <Card className="mb-4">
         <CardContent className="pt-4">
           <form className="grid gap-3 md:grid-cols-5">
-            <Input name="q" placeholder="Search name or roll" defaultValue={resolvedSearchParams.q ?? ""} />
+            <Input name="q" placeholder={t("Search name or roll")} defaultValue={resolvedSearchParams.q ?? ""} />
             <Select name="class" defaultValue={resolvedSearchParams.class ?? ""}>
-              <option value="">All classes</option>
+              <option value="">{t("All classes")}</option>
               {(classes ?? []).map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.name}
                 </option>
               ))}
             </Select>
-            <Input name="session" placeholder="Session" defaultValue={resolvedSearchParams.session ?? ""} />
+            <Input name="session" placeholder={t("Session")} defaultValue={resolvedSearchParams.session ?? ""} />
             <Select name="status" defaultValue={resolvedSearchParams.status ?? ""}>
-              <option value="">All statuses</option>
-              <option value="active">Active</option>
-              <option value="left">Left</option>
-              <option value="graduated">Graduated</option>
+              <option value="">{t("All statuses")}</option>
+              <option value="active">{t("Active")}</option>
+              <option value="left">{t("Left")}</option>
+              <option value="graduated">{t("Graduated")}</option>
             </Select>
-            <Button type="submit">Filter</Button>
+            <Button type="submit">{t("Filter")}</Button>
           </form>
         </CardContent>
       </Card>
@@ -79,13 +81,13 @@ export default async function StudentsPage({
             <Table>
               <thead>
                 <tr>
-                  <Th>Name</Th>
-                  <Th>Roll</Th>
-                  <Th>Class</Th>
-                  <Th>Section</Th>
-                  <Th>Session</Th>
-                  <Th>Status</Th>
-                  <Th>Actions</Th>
+                  <Th>{t("Name")}</Th>
+                  <Th>{t("Roll")}</Th>
+                  <Th>{t("Class")}</Th>
+                  <Th>{t("Section")}</Th>
+                  <Th>{t("Session")}</Th>
+                  <Th>{t("Status")}</Th>
+                  <Th>{t("Actions")}</Th>
                 </tr>
               </thead>
               <tbody>
@@ -102,17 +104,17 @@ export default async function StudentsPage({
                     <Td>
                       <div className="flex flex-wrap gap-2">
                         <Button asChild size="sm" variant="outline">
-                          <Link href={`/admin/students/${student.id}`}>Details</Link>
+                          <Link href={`/admin/students/${student.id}`}>{t("Details")}</Link>
                         </Button>
                         {student.status !== "left" ? (
                           <ConfirmForm
                             action={deleteStudentAction}
-                            firstMessage={`Mark ${student.name} as left? Fees, payments, attendance, marks, and notes will be kept.`}
-                            secondMessage="Final confirmation: mark this student as left?"
+                            firstMessage={t("Mark {name} as left? Fees, payments, attendance, marks, and notes will be kept.", { name: student.name })}
+                            secondMessage={t("Final confirmation: mark this student as left?")}
                           >
                             <input name="id" type="hidden" value={student.id} />
                             <Button size="sm" type="submit" variant="outline">
-                              Mark left
+                              {t("Mark left")}
                             </Button>
                           </ConfirmForm>
                         ) : null}
@@ -131,7 +133,7 @@ export default async function StudentsPage({
           </CardContent>
         </Card>
       ) : (
-        <EmptyState message="No students found. Add a student or change the filters." />
+        <EmptyState message={t("No students found. Add a student or change the filters.")} />
       )}
     </>
   );

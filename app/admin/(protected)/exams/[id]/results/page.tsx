@@ -15,6 +15,7 @@ import {
   type StudentMarkRow,
   type StudentRow
 } from "@/lib/results";
+import { getAdminTranslator } from "@/lib/i18n-server";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function ExamResultSheetPage({
@@ -23,6 +24,7 @@ export default async function ExamResultSheetPage({
   params: Promise<{ id: string }>;
 }) {
   const resolvedParams = await params;
+  const t = await getAdminTranslator();
   const supabase = await createClient();
 
   const { data: exam } = await supabase
@@ -67,16 +69,20 @@ export default async function ExamResultSheetPage({
   return (
     <div className="print-page">
       <PageHeader
-        title="Exam Result Sheet"
-        description={`${examRow.name} - ${examRow.classes?.name ?? "Class"} - Session ${examRow.session_year}`}
+        title={t("Exam Result Sheet")}
+        description={t("{examName} - {className} - Session {session}", {
+          examName: examRow.name,
+          className: examRow.classes?.name ?? t("Class"),
+          session: examRow.session_year
+        })}
       />
       <div className="mb-4 flex flex-wrap gap-2 print-hide">
-        <PrintButton label="Export exam PDF" />
+        <PrintButton label={t("Export exam PDF")} />
         <Button asChild variant="outline">
-          <Link href={`/admin/exams/${resolvedParams.id}`}>Exam setup</Link>
+          <Link href={`/admin/exams/${resolvedParams.id}`}>{t("Exam setup")}</Link>
         </Button>
         <Button asChild variant="outline">
-          <Link href="/admin/results">Edit marks</Link>
+          <Link href="/admin/results">{t("Edit marks")}</Link>
         </Button>
       </div>
 
@@ -84,10 +90,10 @@ export default async function ExamResultSheetPage({
         <CardHeader>
           <CardTitle>{examRow.name}</CardTitle>
           <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-4">
-            <p>Class: {examRow.classes?.name ?? "-"}</p>
-            <p>Session: {examRow.session_year}</p>
-            <p>Subjects: {subjectRows.length}</p>
-            <p>Full mark: {formatMark(fullMarkTotal)}</p>
+            <p>{t("Class: {className}", { className: examRow.classes?.name ?? "-" })}</p>
+            <p>{t("Session: {session}", { session: examRow.session_year })}</p>
+            <p>{t("Subjects: {count}", { count: subjectRows.length })}</p>
+            <p>{t("Full mark: {mark}", { mark: formatMark(fullMarkTotal) })}</p>
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -95,9 +101,9 @@ export default async function ExamResultSheetPage({
             <Table>
               <thead>
                 <tr>
-                  <Th>Position</Th>
-                  <Th>Roll</Th>
-                  <Th>Name</Th>
+                  <Th>{t("Position")}</Th>
+                  <Th>{t("Roll")}</Th>
+                  <Th>{t("Name")}</Th>
                   {subjectRows.map((subject) => (
                     <Th key={subject.subject_id}>
                       {subject.subjects?.name}
@@ -106,10 +112,10 @@ export default async function ExamResultSheetPage({
                       </span>
                     </Th>
                   ))}
-                  <Th>Total</Th>
-                  <Th>Percentage</Th>
-                  <Th>Grade</Th>
-                  <Th>Status</Th>
+                  <Th>{t("Total")}</Th>
+                  <Th>{t("Percentage")}</Th>
+                  <Th>{t("Grade")}</Th>
+                  <Th>{t("Status")}</Th>
                 </tr>
               </thead>
               <tbody>
@@ -124,7 +130,7 @@ export default async function ExamResultSheetPage({
                           <>
                             <span>{formatMark(subject.totalMark)}</span>
                             <span className="block text-xs text-muted-foreground">
-                              {subject.grade} - {subject.status}
+                              {subject.grade} - {t(subject.status.toLowerCase())}
                             </span>
                           </>
                         ) : (
@@ -144,7 +150,7 @@ export default async function ExamResultSheetPage({
             </Table>
           ) : (
             <div className="p-4">
-              <EmptyState message="No result sheet data yet. Assign subjects and enter marks first." />
+              <EmptyState message={t("No result sheet data yet. Assign subjects and enter marks first.")} />
             </div>
           )}
         </CardContent>

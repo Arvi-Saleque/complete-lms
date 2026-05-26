@@ -21,11 +21,13 @@ import {
   type ExamSubjectRow,
   type StudentMarkRow
 } from "@/lib/results";
+import { getAdminLanguage, getAdminTranslator } from "@/lib/i18n-server";
 import { createClient } from "@/lib/supabase/server";
 import { currency } from "@/lib/utils";
 
 export default async function StudentDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
+  const [language, t] = await Promise.all([getAdminLanguage(), getAdminTranslator()]);
   const supabase = await createClient();
   const [
     { data: student },
@@ -128,7 +130,7 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
 
     return {
       examId,
-      examName: examRows.find((exam) => exam.id === examId)?.name ?? "Exam",
+      examName: examRows.find((exam) => exam.id === examId)?.name ?? t("Exam"),
       result
     };
   }).filter((examResult) => examResult.result);
@@ -142,27 +144,31 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
     <>
       <PageHeader
         title={studentRow.name}
-        description={`Roll ${studentRow.roll} • ${studentRow.classes?.name ?? "No class"} • Session ${studentRow.session_year}`}
+        description={t("Roll {roll} - {className} - Session {session}", {
+          roll: studentRow.roll,
+          className: studentRow.classes?.name ?? t("No class"),
+          session: studentRow.session_year
+        })}
         actionHref={`/admin/students/${studentRow.id}/edit`}
-        actionLabel="Edit student"
+        actionLabel={t("Edit student")}
       />
       <div className="space-y-3">
-        <AccordionItem title="Basic Information" defaultOpen>
+        <AccordionItem title={t("Basic Information")} defaultOpen>
           <dl className="grid gap-3 text-sm md:grid-cols-3">
-            <div><dt className="text-muted-foreground">Class</dt><dd>{studentRow.classes?.name ?? "-"}</dd></div>
-            <div><dt className="text-muted-foreground">Section</dt><dd>{studentRow.sections?.name ?? "-"}</dd></div>
-            <div><dt className="text-muted-foreground">Status</dt><dd><Badge value={studentRow.status} /></dd></div>
-            <div><dt className="text-muted-foreground">Father</dt><dd>{studentRow.father_name ?? "-"}</dd></div>
-            <div><dt className="text-muted-foreground">Mother</dt><dd>{studentRow.mother_name ?? "-"}</dd></div>
-            <div><dt className="text-muted-foreground">Phone</dt><dd>{studentRow.guardian_phone ?? "-"}</dd></div>
-            <div className="md:col-span-3"><dt className="text-muted-foreground">Address</dt><dd>{studentRow.address ?? "-"}</dd></div>
+            <div><dt className="text-muted-foreground">{t("Class")}</dt><dd>{studentRow.classes?.name ?? "-"}</dd></div>
+            <div><dt className="text-muted-foreground">{t("Section")}</dt><dd>{studentRow.sections?.name ?? "-"}</dd></div>
+            <div><dt className="text-muted-foreground">{t("Status")}</dt><dd><Badge value={studentRow.status} /></dd></div>
+            <div><dt className="text-muted-foreground">{t("Father")}</dt><dd>{studentRow.father_name ?? "-"}</dd></div>
+            <div><dt className="text-muted-foreground">{t("Mother")}</dt><dd>{studentRow.mother_name ?? "-"}</dd></div>
+            <div><dt className="text-muted-foreground">{t("Phone")}</dt><dd>{studentRow.guardian_phone ?? "-"}</dd></div>
+            <div className="md:col-span-3"><dt className="text-muted-foreground">{t("Address")}</dt><dd>{studentRow.address ?? "-"}</dd></div>
           </dl>
         </AccordionItem>
-        <AccordionItem title="Hajira / Attendance">
+        <AccordionItem title={t("Hajira / Attendance")}>
           <div className="mb-3 flex gap-2 text-sm">
             {["present", "absent", "late", "leave"].map((status) => (
               <span key={status} className="rounded-md bg-secondary px-2 py-1 capitalize">
-                {status}: {attendanceSummary[status] ?? 0}
+                {t(status)}: {attendanceSummary[status] ?? 0}
               </span>
             ))}
           </div>
@@ -178,16 +184,16 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
             </tbody>
           </Table>
         </AccordionItem>
-        <AccordionItem title="Fee Statement" defaultOpen>
+        <AccordionItem title={t("Fee Statement")} defaultOpen>
           <div className="mb-4 flex flex-wrap gap-2 print-hide">
-            <PrintButton label="Print statement" />
+            <PrintButton label={t("Print statement")} />
           </div>
           <div className="mb-4 grid gap-3 md:grid-cols-4">
             {[
-              ["Total amount", currency(feeTotals.amount)],
-              ["Total discount", currency(feeTotals.discount)],
-              ["Total paid", currency(feeTotals.paid)],
-              ["Total due", currency(feeTotals.due)]
+              [t("Total amount"), currency(feeTotals.amount)],
+              [t("Total discount"), currency(feeTotals.discount)],
+              [t("Total paid"), currency(feeTotals.paid)],
+              [t("Total due"), currency(feeTotals.due)]
             ].map(([label, value]) => (
               <div className="rounded-md border p-3" key={label}>
                 <p className="text-xs text-muted-foreground">{label}</p>
@@ -200,13 +206,13 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
               <Table>
                 <thead>
                   <tr>
-                    <Th>Fee</Th>
-                    <Th>Month</Th>
-                    <Th>Amount</Th>
-                    <Th>Discount</Th>
-                    <Th>Paid</Th>
-                    <Th>Due</Th>
-                    <Th>Status</Th>
+                    <Th>{t("Fee")}</Th>
+                    <Th>{t("Month")}</Th>
+                    <Th>{t("Amount")}</Th>
+                    <Th>{t("Discount")}</Th>
+                    <Th>{t("Paid")}</Th>
+                    <Th>{t("Due")}</Th>
+                    <Th>{t("Status")}</Th>
                   </tr>
                 </thead>
                 <tbody>
@@ -224,15 +230,15 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
                 </tbody>
               </Table>
               <div>
-                <h3 className="mb-2 font-medium">Payment history</h3>
+                <h3 className="mb-2 font-medium">{t("Payment history")}</h3>
                 <Table>
                   <thead>
                     <tr>
-                      <Th>Date</Th>
-                      <Th>Fee</Th>
-                      <Th>Amount</Th>
-                      <Th>Receipt</Th>
-                      <Th>Note</Th>
+                      <Th>{t("Date")}</Th>
+                      <Th>{t("Fee")}</Th>
+                      <Th>{t("Amount")}</Th>
+                      <Th>{t("Receipt")}</Th>
+                      <Th>{t("Note")}</Th>
                     </tr>
                   </thead>
                   <tbody>
@@ -253,9 +259,9 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
                 </Table>
               </div>
             </div>
-          ) : <EmptyState message="No fee records yet." />}
+          ) : <EmptyState message={t("No fee records yet.")} />}
         </AccordionItem>
-        <AccordionItem title="Payment History">
+        <AccordionItem title={t("Payment History")}>
           <Table>
             <tbody>
               {paymentRows.map((payment) => (
@@ -273,7 +279,7 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
             </tbody>
           </Table>
         </AccordionItem>
-        <AccordionItem title="Exam Results">
+        <AccordionItem title={t("Exam Results")}>
           {examResults.length ? (
             <div className="space-y-4">
               {examResults.map(({ examId, examName, result }) => (
@@ -282,7 +288,12 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
                     <div>
                       <p className="font-medium">{examName}</p>
                       <p className="text-sm text-muted-foreground">
-                        Total {formatMark(result.totalObtained)}/{formatMark(result.totalFullMarks)} - {formatPercentage(result.percentage)} - Grade {result.grade}
+                        {t("Total {obtained}/{full} - {percentage} - Grade {grade}", {
+                          obtained: formatMark(result.totalObtained),
+                          full: formatMark(result.totalFullMarks),
+                          percentage: formatPercentage(result.percentage),
+                          grade: result.grade
+                        })}
                       </p>
                     </div>
                     <Badge value={result.status.toLowerCase()} />
@@ -290,12 +301,12 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
                   <Table>
                     <thead>
                       <tr>
-                        <Th>Subject</Th>
-                        <Th>Written</Th>
-                        <Th>Oral</Th>
-                        <Th>Total</Th>
-                        <Th>Grade</Th>
-                        <Th>Status</Th>
+                        <Th>{t("Subject")}</Th>
+                        <Th>{t("Written")}</Th>
+                        <Th>{t("Oral")}</Th>
+                        <Th>{t("Total")}</Th>
+                        <Th>{t("Grade")}</Th>
+                        <Th>{t("Status")}</Th>
                       </tr>
                     </thead>
                     <tbody>
@@ -318,9 +329,9 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
                 </div>
               ))}
             </div>
-          ) : <EmptyState message="No exam results yet." />}
+          ) : <EmptyState message={t("No exam results yet.")} />}
         </AccordionItem>
-        <AccordionItem title="Custom Fields">
+        <AccordionItem title={t("Custom Fields")}>
           {customFieldDefinitionRows.length ? (
             <form action={saveCustomFields} className="grid gap-4 md:grid-cols-2">
               {customFieldDefinitionRows.map((field) => (
@@ -332,7 +343,7 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
                       name={`custom_${field.id}`}
                       defaultValue={customValueByField.get(field.id) ?? ""}
                     >
-                      <option value="">Select value</option>
+                      <option value="">{t("Select value")}</option>
                       {String(field.options ?? "")
                         .split(",")
                         .map((option) => option.trim())
@@ -349,9 +360,9 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
                       name={`custom_${field.id}`}
                       defaultValue={customValueByField.get(field.id) ?? ""}
                     >
-                      <option value="">Select value</option>
-                      <option value="true">Yes</option>
-                      <option value="false">No</option>
+                      <option value="">{t("Select value")}</option>
+                      <option value="true">{t("Yes")}</option>
+                      <option value="false">{t("No")}</option>
                     </Select>
                   ) : (
                     <Input
@@ -370,15 +381,15 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
                 </div>
               ))}
               <div className="md:col-span-2">
-                <Button type="submit">Save custom fields</Button>
+                <Button type="submit">{t("Save custom fields")}</Button>
               </div>
             </form>
-          ) : <EmptyState message="No student custom fields defined. Create fields in Admin > Custom Fields first." />}
+          ) : <EmptyState message={t("No student custom fields defined. Create fields in Admin > Custom Fields first.")} />}
         </AccordionItem>
-        <AccordionItem title="Notes">
+        <AccordionItem title={t("Notes")}>
           <form action={addNote} className="mb-4 space-y-3">
-            <Textarea name="note" placeholder="Write a note about this student" required />
-            <Button type="submit">Add note</Button>
+            <Textarea name="note" placeholder={t("Write a note about this student")} required />
+            <Button type="submit">{t("Add note")}</Button>
           </form>
           {noteRows.length ? (
             <div className="space-y-2">
@@ -387,30 +398,30 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
                   <div>
                     <p>{note.note}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {new Date(note.created_at).toLocaleString("en-BD", {
+                      {new Date(note.created_at).toLocaleString(language === "bn" ? "bn-BD" : "en-BD", {
                         timeZone: "Asia/Dhaka"
                       })}
                     </p>
                   </div>
                   <ConfirmForm
                     action={deleteNote}
-                    firstMessage="Delete this note?"
-                    secondMessage="Final confirmation: delete this note permanently?"
+                    firstMessage={t("Delete this note?")}
+                    secondMessage={t("Final confirmation: delete this note permanently?")}
                   >
                     <input name="id" type="hidden" value={note.id} />
                     <Button size="sm" type="submit" variant="destructive">
-                      Delete
+                      {t("Delete")}
                     </Button>
                   </ConfirmForm>
                 </div>
               ))}
             </div>
-          ) : <EmptyState message="No notes yet." />}
+          ) : <EmptyState message={t("No notes yet.")} />}
         </AccordionItem>
       </div>
       <div className="mt-4">
         <Button asChild variant="outline">
-          <Link href="/admin/students">Back to students</Link>
+          <Link href="/admin/students">{t("Back to students")}</Link>
         </Button>
       </div>
     </>

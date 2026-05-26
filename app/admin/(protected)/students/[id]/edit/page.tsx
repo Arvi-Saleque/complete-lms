@@ -2,14 +2,15 @@ import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/admin/page-header";
 import { StudentForm } from "@/components/admin/student-form";
 import { updateStudentAction } from "@/lib/actions";
+import { getAdminLanguage, getAdminTranslator } from "@/lib/i18n-server";
 import { createClient } from "@/lib/supabase/server";
 
-function studentFormError(code?: string) {
+function studentFormError(t: (text: string) => string, code?: string) {
   if (code === "section-class-mismatch") {
-    return "The selected section does not belong to the selected class. Please choose a section from that class.";
+    return t("The selected section does not belong to the selected class. Please choose a section from that class.");
   }
   if (code === "roll-exists") {
-    return "Roll number already exists for this class, section, and session.";
+    return t("Roll number already exists for this class, section, and session.");
   }
   return undefined;
 }
@@ -23,6 +24,7 @@ export default async function EditStudentPage({
 }) {
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
+  const [language, t] = await Promise.all([getAdminLanguage(), getAdminTranslator()]);
   const supabase = await createClient();
   const [{ data: student }, { data: classes }, { data: sections }] = await Promise.all([
     supabase.from("students").select("*").eq("id", resolvedParams.id).maybeSingle(),
@@ -35,14 +37,15 @@ export default async function EditStudentPage({
 
   return (
     <>
-      <PageHeader title="Edit Student" description={`Update ${student.name}'s profile.`} />
+      <PageHeader title={t("Edit Student")} description={t("Update {name}'s profile.", { name: student.name })} />
       <StudentForm
         action={action}
         classes={classes ?? []}
         sections={sections ?? []}
         student={student}
-        error={studentFormError(resolvedSearchParams.error)}
-        submitLabel="Save changes"
+        error={studentFormError(t, resolvedSearchParams.error)}
+        submitLabel={t("Save changes")}
+        language={language}
       />
     </>
   );

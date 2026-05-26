@@ -5,10 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label, Select } from "@/components/ui/form";
 import { Table, Td, Th } from "@/components/ui/table";
 import { createExamAction, createSubjectAction, deleteSubjectAction } from "@/lib/actions";
+import { getAdminTranslator } from "@/lib/i18n-server";
 import { currentBangladeshYear } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function NewExamPage() {
+  const t = await getAdminTranslator();
   const supabase = await createClient();
   const [{ data: classes }, { data: subjects }] = await Promise.all([
     supabase.from("classes").select("id,name").eq("is_active", true).order("sort_order"),
@@ -17,40 +19,40 @@ export default async function NewExamPage() {
 
   return (
     <>
-      <PageHeader title="Create Exam" description="Set up an exam, then assign subjects on the exam page." />
+      <PageHeader title={t("Create Exam")} description={t("Set up an exam, then assign subjects on the exam page.")} />
       <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
         <Card>
-          <CardHeader><CardTitle>Exam details</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{t("Exam details")}</CardTitle></CardHeader>
           <CardContent>
             <form action={createExamAction} className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="name">Exam name</Label>
-                <Input id="name" name="name" required placeholder="First Term Exam" />
+                <Label htmlFor="name">{t("Exam name")}</Label>
+                <Input id="name" name="name" required placeholder={t("First Term Exam")} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="class_id">Class</Label>
+                <Label htmlFor="class_id">{t("Class")}</Label>
                 <Select id="class_id" name="class_id" required>
-                  <option value="">Select class</option>
+                  <option value="">{t("Select class")}</option>
                   {(classes ?? []).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="session_year">Session year</Label>
+                <Label htmlFor="session_year">{t("Session year")}</Label>
                 <Input id="session_year" name="session_year" required defaultValue={currentBangladeshYear()} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="start_date">Start date</Label>
+                <Label htmlFor="start_date">{t("Start date")}</Label>
                 <Input id="start_date" name="start_date" type="date" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="end_date">End date</Label>
+                <Label htmlFor="end_date">{t("End date")}</Label>
                 <Input id="end_date" name="end_date" type="date" />
               </div>
               <div className="space-y-3 md:col-span-2">
                 <div>
-                  <Label>Assign subjects now</Label>
+                  <Label>{t("Assign subjects now")}</Label>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Selected subjects will be added with full mark 100 and minimum pass mark 33.
+                    {t("Selected subjects will be added with full mark 100 and minimum pass mark 33.")}
                   </p>
                 </div>
                 {(subjects ?? []).length ? (
@@ -64,24 +66,24 @@ export default async function NewExamPage() {
                   </div>
                 ) : (
                   <p className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
-                    No subjects yet. Add subjects from the panel on the right first.
+                    {t("No subjects yet. Add subjects from the panel on the right first.")}
                   </p>
                 )}
               </div>
-              <div className="md:col-span-2"><Button type="submit">Create exam</Button></div>
+              <div className="md:col-span-2"><Button type="submit">{t("Create exam")}</Button></div>
             </form>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle>Subjects</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{t("Subjects")}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <form action={createSubjectAction} className="grid gap-2">
-              <Input name="name" required placeholder="Subject name" />
-              <Input name="code" placeholder="Code" />
-              <Button type="submit" variant="secondary">Add subject</Button>
+              <Input name="name" required placeholder={t("Subject name")} />
+              <Input name="code" placeholder={t("Code")} />
+              <Button type="submit" variant="secondary">{t("Add subject")}</Button>
             </form>
             <Table>
-              <thead><tr><Th>Name</Th><Th>Code</Th><Th>Delete</Th></tr></thead>
+              <thead><tr><Th>{t("Name")}</Th><Th>{t("Code")}</Th><Th>{t("Delete")}</Th></tr></thead>
               <tbody>
                 {(subjects ?? []).map((subject) => (
                   <tr key={subject.id}>
@@ -90,12 +92,12 @@ export default async function NewExamPage() {
                     <Td>
                       <ConfirmForm
                         action={deleteSubjectAction}
-                        firstMessage={`Delete subject ${subject.name}? Existing exam subjects or marks may block this if they still use it.`}
-                        secondMessage="Final confirmation: delete this subject?"
+                        firstMessage={t("Delete subject {name}? Existing exam subjects or marks may block this if they still use it.", { name: subject.name })}
+                        secondMessage={t("Final confirmation: delete this subject?")}
                       >
                         <input name="id" type="hidden" value={subject.id} />
                         <Button size="sm" type="submit" variant="destructive">
-                          Delete
+                          {t("Delete")}
                         </Button>
                       </ConfirmForm>
                     </Td>

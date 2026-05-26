@@ -6,10 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label, Select } from "@/components/ui/form";
 import { Table, Td, Th } from "@/components/ui/table";
 import { addExamSubjectAction, deleteExamSubjectAction } from "@/lib/actions";
+import { getAdminTranslator } from "@/lib/i18n-server";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function ExamDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
+  const t = await getAdminTranslator();
   const supabase = await createClient();
   const [{ data: exam }, { data: examSubjects }, { data: subjects }] = await Promise.all([
     supabase.from("exams").select("*,classes(name)").eq("id", resolvedParams.id).maybeSingle(),
@@ -26,39 +28,39 @@ export default async function ExamDetailsPage({ params }: { params: Promise<{ id
     <>
       <PageHeader
         title={examRow.name}
-        description={`${examRow.classes?.name ?? "Class"} • Session ${examRow.session_year}`}
+        description={`${examRow.classes?.name ?? t("Class")} - ${t("Session {session}", { session: examRow.session_year })}`}
       />
       <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
         <Card>
-          <CardHeader><CardTitle>Add subject</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{t("Add subject")}</CardTitle></CardHeader>
           <CardContent>
             <form action={action} className="space-y-3">
               <div className="space-y-2">
-                <Label htmlFor="subject_id">Subject</Label>
+                <Label htmlFor="subject_id">{t("Subject")}</Label>
                 <Select id="subject_id" name="subject_id" required>
-                  <option value="">Select subject</option>
+                  <option value="">{t("Select subject")}</option>
                   {(subjects ?? []).map((subject) => <option key={subject.id} value={subject.id}>{subject.name}</option>)}
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="full_mark">Full mark</Label>
+                <Label htmlFor="full_mark">{t("Full mark")}</Label>
                 <Input id="full_mark" name="full_mark" type="number" defaultValue="100" required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="pass_mark">Minimum pass mark</Label>
+                <Label htmlFor="pass_mark">{t("Minimum pass mark")}</Label>
                 <Input id="pass_mark" name="pass_mark" type="number" defaultValue="33" required />
                 <p className="text-xs text-muted-foreground">
-                  This is the required mark to pass, not the student&apos;s obtained mark.
+                  {t("This is the required mark to pass, not the student's obtained mark.")}
                 </p>
               </div>
-              <Button type="submit">Assign subject</Button>
+              <Button type="submit">{t("Assign subject")}</Button>
             </form>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-0">
             <Table>
-              <thead><tr><Th>Subject</Th><Th>Code</Th><Th>Full mark</Th><Th>Minimum pass</Th><Th>Delete</Th></tr></thead>
+              <thead><tr><Th>{t("Subject")}</Th><Th>{t("Code")}</Th><Th>{t("Full mark")}</Th><Th>{t("Minimum pass")}</Th><Th>{t("Delete")}</Th></tr></thead>
               <tbody>
                 {examSubjectRows.map((item) => (
                   <tr key={item.id}>
@@ -69,13 +71,13 @@ export default async function ExamDetailsPage({ params }: { params: Promise<{ id
                     <Td>
                       <ConfirmForm
                         action={deleteExamSubjectAction}
-                        firstMessage={`Remove ${item.subjects?.name} from this exam? Related marks may also need cleanup.`}
-                        secondMessage="Final confirmation: remove this exam subject?"
+                        firstMessage={t("Remove {name} from this exam? Related marks may also need cleanup.", { name: item.subjects?.name })}
+                        secondMessage={t("Final confirmation: remove this exam subject?")}
                       >
                         <input name="id" type="hidden" value={item.id} />
                         <input name="exam_id" type="hidden" value={resolvedParams.id} />
                         <Button size="sm" type="submit" variant="destructive">
-                          Delete
+                          {t("Delete")}
                         </Button>
                       </ConfirmForm>
                     </Td>

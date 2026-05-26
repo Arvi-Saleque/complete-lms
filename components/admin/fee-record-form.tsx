@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select, Textarea } from "@/components/ui/form";
+import { translator, type AdminLanguage } from "@/lib/i18n";
 import { currentBangladeshYear } from "@/lib/utils";
 
 const months = [
@@ -23,12 +24,15 @@ const months = [
 export function FeeRecordForm({
   action,
   students,
-  feeTypes
+  feeTypes,
+  language
 }: {
   action: (formData: FormData) => void | Promise<void>;
   students: any[];
   feeTypes: any[];
+  language: AdminLanguage;
 }) {
+  const t = translator(language);
   const [selectedFeeTypeId, setSelectedFeeTypeId] = useState("");
   const [amount, setAmount] = useState("0");
   const feeTypeById = useMemo(
@@ -39,18 +43,18 @@ export function FeeRecordForm({
   return (
     <form action={action} className="grid gap-4 md:grid-cols-2">
       <div className="space-y-2">
-        <Label htmlFor="student_id">Student</Label>
+        <Label htmlFor="student_id">{t("Student")}</Label>
         <Select id="student_id" name="student_id" required>
-          <option value="">Select student</option>
+          <option value="">{t("Select student")}</option>
           {students.map((student) => (
             <option key={student.id} value={student.id}>
-              {student.name} - Roll {student.roll} - {student.classes?.name ?? "No class"}
+              {student.name} - {t("Roll {roll}", { roll: student.roll })} - {student.classes?.name ?? t("No class")}
             </option>
           ))}
         </Select>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="fee_type_id">Fee type</Label>
+        <Label htmlFor="fee_type_id">{t("Fee type")}</Label>
         <Select
           id="fee_type_id"
           name="fee_type_id"
@@ -63,7 +67,7 @@ export function FeeRecordForm({
             setAmount(String(nextFeeType?.default_amount ?? 0));
           }}
         >
-          <option value="">Select fee</option>
+          <option value="">{t("Select fee")}</option>
           {feeTypes.map((fee) => (
             <option key={fee.id} value={fee.id}>
               {fee.name}
@@ -71,11 +75,11 @@ export function FeeRecordForm({
           ))}
         </Select>
         <p className="text-xs text-muted-foreground">
-          Selecting a fee type fills the amount from that fee type&apos;s default amount.
+          {t("Selecting a fee type fills the amount from that fee type's default amount.")}
         </p>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="amount">Amount</Label>
+        <Label htmlFor="amount">{t("Amount")}</Label>
         <Input
           id="amount"
           name="amount"
@@ -87,38 +91,38 @@ export function FeeRecordForm({
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="discount_amount">Discount / Vortuki</Label>
+        <Label htmlFor="discount_amount">{t("Discount / Vortuki")}</Label>
         <Input id="discount_amount" name="discount_amount" type="number" min="0" defaultValue="0" />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="paid_amount">Already paid</Label>
+        <Label htmlFor="paid_amount">{t("Already paid")}</Label>
         <Input id="paid_amount" name="paid_amount" type="number" min="0" defaultValue="0" />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="month">Month</Label>
+        <Label htmlFor="month">{t("Month")}</Label>
         <Select id="month" name="month" defaultValue="">
-          <option value="">No month / one-time</option>
+          <option value="">{t("No month / one-time")}</option>
           {months.map((month) => (
             <option key={month} value={month}>
-              {month}
+              {t(month)}
             </option>
           ))}
         </Select>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="session_year">Session year</Label>
+        <Label htmlFor="session_year">{t("Session year")}</Label>
         <Input id="session_year" name="session_year" required defaultValue={currentBangladeshYear()} />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="due_date">Due date</Label>
+        <Label htmlFor="due_date">{t("Due date")}</Label>
         <Input id="due_date" name="due_date" type="date" />
       </div>
       <div className="space-y-2 md:col-span-2">
-        <Label htmlFor="note">Note</Label>
+        <Label htmlFor="note">{t("Note")}</Label>
         <Textarea id="note" name="note" />
       </div>
       <div className="md:col-span-2">
-        <Button type="submit">Create fee record</Button>
+        <Button type="submit">{t("Create fee record")}</Button>
       </div>
     </form>
   );

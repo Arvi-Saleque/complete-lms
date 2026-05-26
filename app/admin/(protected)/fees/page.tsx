@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Select, Textarea } from "@/components/ui/form";
 import { Table, Td, Th } from "@/components/ui/table";
 import { addPaymentAction, deleteFeeRecordAction } from "@/lib/actions";
+import { getAdminTranslator } from "@/lib/i18n-server";
 import { pageFromSearch, rangeForPage } from "@/lib/pagination";
 import { createClient } from "@/lib/supabase/server";
 import { currency, todayIso } from "@/lib/utils";
@@ -63,6 +64,7 @@ export default async function FeesPage({
   searchParams: Promise<FeeSearchParams>;
 }) {
   const resolvedSearchParams = await searchParams;
+  const t = await getAdminTranslator();
   const page = pageFromSearch(resolvedSearchParams.page);
   const { from, to } = rangeForPage(page);
   const supabase = await createClient();
@@ -137,29 +139,29 @@ export default async function FeesPage({
   return (
     <>
       <PageHeader
-        title="Fees"
-        description="Track student dues, partial payments, and paid fees."
+        title={t("Fees")}
+        description={t("Track student dues, partial payments, and paid fees.")}
         actionHref="/admin/fees/new"
-        actionLabel="Add fee"
+        actionLabel={t("Add fee")}
       />
       {resolvedSearchParams.payment === "success" ? (
         <div className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
-          Payment saved and fee balance updated.
+          {t("Payment saved and fee balance updated.")}
         </div>
       ) : null}
       {resolvedSearchParams.payment_error ? (
         <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          {resolvedSearchParams.payment_error}
+          {t(resolvedSearchParams.payment_error)}
         </div>
       ) : null}
 
       <div className="mb-4 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         {[
-          ["Total billed", currency(totalBilled)],
-          ["Total collected", currency(totalCollected)],
-          ["Total due", currency(totalDue)],
-          ["Unpaid records", String(unpaidCount)],
-          ["Partial records", String(partialCount)]
+          [t("Total billed"), currency(totalBilled)],
+          [t("Total collected"), currency(totalCollected)],
+          [t("Total due"), currency(totalDue)],
+          [t("Unpaid records"), String(unpaidCount)],
+          [t("Partial records"), String(partialCount)]
         ].map(([label, value]) => (
           <Card key={label}>
             <CardHeader>
@@ -174,12 +176,12 @@ export default async function FeesPage({
 
       <Card className="mb-4">
         <CardHeader>
-          <CardTitle>Filters</CardTitle>
+          <CardTitle>{t("Filters")}</CardTitle>
         </CardHeader>
         <CardContent>
           <form className="grid gap-3 md:grid-cols-3 xl:grid-cols-5">
             <Select name="class" defaultValue={selectedClassId}>
-              <option value="">All classes</option>
+              <option value="">{t("All classes")}</option>
               {(classes ?? []).map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.name}
@@ -187,16 +189,16 @@ export default async function FeesPage({
               ))}
             </Select>
             <Select name="section" defaultValue={resolvedSearchParams.section ?? ""}>
-              <option value="">All sections</option>
+              <option value="">{t("All sections")}</option>
               {sectionRows.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.name}
                 </option>
               ))}
             </Select>
-            <Input name="session" placeholder="Session / year" defaultValue={resolvedSearchParams.session ?? ""} />
+            <Input name="session" placeholder={t("Session / year")} defaultValue={resolvedSearchParams.session ?? ""} />
             <Select name="fee_type" defaultValue={resolvedSearchParams.fee_type ?? ""}>
-              <option value="">All fee types</option>
+              <option value="">{t("All fee types")}</option>
               {(feeTypes ?? []).map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.name}
@@ -204,26 +206,26 @@ export default async function FeesPage({
               ))}
             </Select>
             <Select name="status" defaultValue={resolvedSearchParams.status ?? ""}>
-              <option value="">All statuses</option>
-              <option value="unpaid">Unpaid</option>
-              <option value="partial">Partial</option>
-              <option value="paid">Paid</option>
+              <option value="">{t("All statuses")}</option>
+              <option value="unpaid">{t("Unpaid")}</option>
+              <option value="partial">{t("Partial")}</option>
+              <option value="paid">{t("Paid")}</option>
             </Select>
             <Select name="month" defaultValue={resolvedSearchParams.month ?? ""}>
-              <option value="">All months</option>
+              <option value="">{t("All months")}</option>
               {months.map((month) => (
                 <option key={month} value={month}>
-                  {month}
+                  {t(month)}
                 </option>
               ))}
             </Select>
             <Input name="due_from" type="date" defaultValue={resolvedSearchParams.due_from ?? ""} />
             <Input name="due_to" type="date" defaultValue={resolvedSearchParams.due_to ?? ""} />
-            <Input name="search" placeholder="Student name or roll" defaultValue={resolvedSearchParams.search ?? ""} />
+            <Input name="search" placeholder={t("Student name or roll")} defaultValue={resolvedSearchParams.search ?? ""} />
             <div className="flex gap-2">
-              <Button className="flex-1" type="submit">Apply</Button>
+              <Button className="flex-1" type="submit">{t("Apply")}</Button>
               <Button asChild className="flex-1" variant="outline">
-                <Link href="/admin/fees">Clear</Link>
+                <Link href="/admin/fees">{t("Clear")}</Link>
               </Button>
             </div>
           </form>
@@ -235,14 +237,14 @@ export default async function FeesPage({
           <Table>
             <thead>
               <tr>
-                <Th>Student</Th>
-                <Th>Fee</Th>
-                <Th>Total</Th>
-                <Th>Paid</Th>
-                <Th>Due</Th>
-                <Th>Status</Th>
-                <Th>Payment</Th>
-                <Th>Delete</Th>
+                <Th>{t("Student")}</Th>
+                <Th>{t("Fee")}</Th>
+                <Th>{t("Total")}</Th>
+                <Th>{t("Paid")}</Th>
+                <Th>{t("Due")}</Th>
+                <Th>{t("Status")}</Th>
+                <Th>{t("Payment")}</Th>
+                <Th>{t("Delete")}</Th>
               </tr>
             </thead>
             <tbody>
@@ -253,10 +255,13 @@ export default async function FeesPage({
                   <tr key={record.id}>
                     <Td>
                       <Link className="font-medium text-primary" href={`/admin/students/${record.students?.id}`}>
-                        {record.students?.name ?? "Unknown"}
+                        {record.students?.name ?? t("Unknown")}
                       </Link>
                       <p className="text-xs text-muted-foreground">
-                        Roll {record.students?.roll ?? "-"} - {record.students?.classes?.name ?? "-"}
+                        {t("Roll {roll} - {className}", {
+                          roll: record.students?.roll ?? "-",
+                          className: record.students?.classes?.name ?? "-"
+                        })}
                         {record.students?.sections?.name ? ` - ${record.students.sections.name}` : ""}
                       </p>
                     </Td>
@@ -264,7 +269,11 @@ export default async function FeesPage({
                       <details>
                         <summary className="cursor-pointer font-medium">{record.fee_types?.name}</summary>
                         <p className="mt-1 text-xs text-muted-foreground">
-                          Month: {record.month ?? "-"} - Session: {record.session_year} - Due: {record.due_date ?? "-"}
+                          {t("Month: {month} - Session: {session} - Due: {due}", {
+                            month: record.month ? t(record.month) : "-",
+                            session: record.session_year,
+                            due: record.due_date ?? "-"
+                          })}
                         </p>
                         {record.note ? <p className="mt-1 text-xs">{record.note}</p> : null}
                       </details>
@@ -282,29 +291,29 @@ export default async function FeesPage({
                             max={dueAmount}
                             min="1"
                             name="amount"
-                            placeholder="Amount"
+                            placeholder={t("Amount")}
                             required
                             type="number"
                           />
                           <Input name="payment_date" type="date" defaultValue={todayIso()} required />
-                          <Textarea className="col-span-2 min-h-16" name="note" placeholder="Note" />
-                          <PendingButton className="col-span-2" pendingLabel="Saving..." size="sm" type="submit">
-                            Add payment
+                          <Textarea className="col-span-2 min-h-16" name="note" placeholder={t("Note")} />
+                          <PendingButton className="col-span-2" pendingLabel={t("Saving...")} size="sm" type="submit">
+                            {t("Add payment")}
                           </PendingButton>
                         </form>
                       ) : (
-                        <p className="text-sm font-medium text-emerald-700">Fully paid</p>
+                        <p className="text-sm font-medium text-emerald-700">{t("Fully paid")}</p>
                       )}
                     </Td>
                     <Td>
                       <ConfirmForm
                         action={deleteFeeRecordAction}
-                        firstMessage="Delete this fee record? Related payments will also be removed."
-                        secondMessage="Final confirmation: delete this fee record permanently?"
+                        firstMessage={t("Delete this fee record? Related payments will also be removed.")}
+                        secondMessage={t("Final confirmation: delete this fee record permanently?")}
                       >
                         <input name="id" type="hidden" value={record.id} />
                         <Button size="sm" type="submit" variant="destructive">
-                          Delete
+                          {t("Delete")}
                         </Button>
                       </ConfirmForm>
                     </Td>
@@ -314,7 +323,7 @@ export default async function FeesPage({
             </tbody>
           </Table>
           {!recordRows.length ? (
-            <div className="p-6 text-sm text-muted-foreground">No fee records match these filters.</div>
+            <div className="p-6 text-sm text-muted-foreground">{t("No fee records match these filters.")}</div>
           ) : null}
           <Pagination
             count={recordsResult.count}

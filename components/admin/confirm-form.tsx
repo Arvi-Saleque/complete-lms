@@ -2,6 +2,16 @@
 
 import { type ReactNode, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { defaultLanguage, isAdminLanguage, translator } from "@/lib/i18n";
+
+function currentLanguage() {
+  if (typeof document === "undefined") return defaultLanguage;
+  const value = document.cookie
+    .split("; ")
+    .find((item) => item.startsWith("ikra-admin-language="))
+    ?.split("=")[1];
+  return isAdminLanguage(value) ? value : defaultLanguage;
+}
 
 export function ConfirmForm({
   action,
@@ -20,6 +30,7 @@ export function ConfirmForm({
   const confirmedRef = useRef(false);
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
+  const t = translator(currentLanguage());
 
   function closeModal() {
     confirmedRef.current = false;
@@ -58,35 +69,36 @@ export function ConfirmForm({
           <div className="w-full max-w-lg rounded-lg border bg-card shadow-xl">
             <div className="border-b p-5">
               <p className="text-lg font-semibold">
-                {step === 1 ? "Confirm action" : "Final confirmation"}
+                {step === 1 ? t("Confirm action") : t("Final confirmation")}
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                This action can affect related records.
+                {t("This action can affect related records.")}
               </p>
             </div>
             <div className="space-y-4 p-5">
               <div className="rounded-md border bg-secondary/50 p-4">
-                <p className="text-sm font-semibold">What will happen</p>
+                <p className="text-sm font-semibold">{t("What will happen")}</p>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  {step === 1 ? firstMessage : secondMessage}
+                  {step === 1 ? t(firstMessage) : t(secondMessage)}
                 </p>
               </div>
               <div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-                Related child records may also be deleted or changed, for example fees,
-                payments, attendance, marks, subject links, notes, or custom field values.
+                {t(
+                  "Related child records may also be deleted or changed, for example fees, payments, attendance, marks, subject links, notes, or custom field values."
+                )}
               </div>
             </div>
             <div className="flex flex-col-reverse gap-2 border-t p-5 sm:flex-row sm:justify-end">
               <Button type="button" variant="outline" onClick={closeModal}>
-                Cancel
+                {t("Cancel")}
               </Button>
               {step === 1 ? (
                 <Button type="button" onClick={() => setStep(2)}>
-                  Continue
+                  {t("Continue")}
                 </Button>
               ) : (
                 <Button type="button" variant="destructive" onClick={submitConfirmed}>
-                  Confirm final action
+                  {t("Confirm final action")}
                 </Button>
               )}
             </div>

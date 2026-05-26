@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { PendingButton } from "@/components/admin/pending-button";
 import { Input, Label, Select } from "@/components/ui/form";
+import { translator, type AdminLanguage } from "@/lib/i18n";
 
 type AttendanceFilterFormProps = {
   classes: Array<{ id: string; name: string }>;
@@ -10,6 +11,7 @@ type AttendanceFilterFormProps = {
   selectedClassId: string;
   selectedSectionId: string;
   date: string;
+  language: AdminLanguage;
 };
 
 export function AttendanceFilterForm({
@@ -17,8 +19,10 @@ export function AttendanceFilterForm({
   sections,
   selectedClassId,
   selectedSectionId,
-  date
+  date,
+  language
 }: AttendanceFilterFormProps) {
+  const t = translator(language);
   const [classId, setClassId] = useState(selectedClassId);
   const [sectionId, setSectionId] = useState(selectedSectionId);
   const classSections = useMemo(
@@ -32,7 +36,7 @@ export function AttendanceFilterForm({
   return (
     <form className="grid gap-3 md:grid-cols-4">
       <div className="space-y-2">
-        <Label htmlFor="class">Class</Label>
+        <Label htmlFor="class">{t("Class")}</Label>
         <Select
           id="class"
           name="class"
@@ -43,7 +47,7 @@ export function AttendanceFilterForm({
             setSectionId("");
           }}
         >
-          <option value="">Select class</option>
+          <option value="">{t("Select class")}</option>
           {classes.map((item) => (
             <option key={item.id} value={item.id}>
               {item.name}
@@ -52,7 +56,7 @@ export function AttendanceFilterForm({
         </Select>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="section">Section</Label>
+        <Label htmlFor="section">{t("Section")}</Label>
         <Select
           disabled={!classId || !classSections.length}
           id="section"
@@ -60,7 +64,7 @@ export function AttendanceFilterForm({
           value={sectionId}
           onChange={(event) => setSectionId(event.target.value)}
         >
-          <option value="">All sections</option>
+          <option value="">{t("All sections")}</option>
           {classSections.map((item) => (
             <option key={item.id} value={item.id}>
               {item.name}
@@ -69,12 +73,12 @@ export function AttendanceFilterForm({
         </Select>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="date">Date</Label>
+        <Label htmlFor="date">{t("Date")}</Label>
         <Input id="date" name="date" type="date" defaultValue={date} />
       </div>
       <div className="flex items-end">
-        <PendingButton className="w-full" pendingLabel="Loading students..." type="submit">
-          Load students
+        <PendingButton className="w-full" pendingLabel={t("Loading students...")} type="submit">
+          {t("Load students")}
         </PendingButton>
       </div>
     </form>

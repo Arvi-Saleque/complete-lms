@@ -7,10 +7,12 @@ import { EmptyState } from "@/components/ui/empty";
 import { Input, Label, Select, Textarea } from "@/components/ui/form";
 import { Table, Td, Th } from "@/components/ui/table";
 import { createCustomFieldAction, deleteCustomFieldAction } from "@/lib/actions";
+import { getAdminTranslator } from "@/lib/i18n-server";
 import { fieldTypes } from "@/lib/options";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function CustomFieldsPage() {
+  const t = await getAdminTranslator();
   const supabase = await createClient();
   const { data: fields } = await supabase
     .from("custom_field_definitions")
@@ -20,67 +22,67 @@ export default async function CustomFieldsPage() {
   return (
     <>
       <PageHeader
-        title="Custom Fields"
-        description="Add non-money metadata fields. Use fee types for all money-related charges."
+        title={t("Custom Fields")}
+        description={t("Add non-money metadata fields. Use fee types for all money-related charges.")}
       />
       <div className="grid gap-4 xl:grid-cols-[380px_1fr]">
         <Card>
-          <CardHeader><CardTitle>Add custom field</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{t("Add custom field")}</CardTitle></CardHeader>
           <CardContent>
             <form action={createCustomFieldAction} className="space-y-3">
               <div className="space-y-2">
-                <Label htmlFor="label">Label</Label>
-                <Input id="label" name="label" required placeholder="Birth certificate no" />
+                <Label htmlFor="label">{t("Label")}</Label>
+                <Input id="label" name="label" required placeholder={t("Birth certificate no")} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="name">System name</Label>
+                <Label htmlFor="name">{t("System name")}</Label>
                 <Input id="name" name="name" required placeholder="birth_certificate_no" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="entity_type">Entity</Label>
+                <Label htmlFor="entity_type">{t("Entity")}</Label>
                 <Select id="entity_type" name="entity_type" defaultValue="student">
-                  <option value="student">Student</option>
-                  <option value="fee">Fee</option>
-                  <option value="exam">Exam</option>
+                  <option value="student">{t("Student")}</option>
+                  <option value="fee">{t("Fee")}</option>
+                  <option value="exam">{t("Exam")}</option>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="field_type">Type</Label>
+                <Label htmlFor="field_type">{t("Type")}</Label>
                 <Select id="field_type" name="field_type" defaultValue="text">
-                  {fieldTypes.map((item) => <option key={item}>{item}</option>)}
+                  {fieldTypes.map((item) => <option key={item} value={item}>{t(item)}</option>)}
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="options">Options</Label>
-                <Textarea id="options" name="options" placeholder="Only for dropdown fields" />
+                <Label htmlFor="options">{t("Options")}</Label>
+                <Textarea id="options" name="options" placeholder={t("Only for dropdown fields")} />
               </div>
-              <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="is_required" /> Required</label>
-              <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="is_active" defaultChecked /> Active</label>
-              <Button type="submit">Save field</Button>
+              <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="is_required" /> {t("Required")}</label>
+              <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="is_active" defaultChecked /> {t("Active")}</label>
+              <Button type="submit">{t("Save field")}</Button>
             </form>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-0">
             <Table>
-              <thead><tr><Th>Label</Th><Th>Name</Th><Th>Entity</Th><Th>Type</Th><Th>Status</Th><Th>Delete</Th></tr></thead>
+              <thead><tr><Th>{t("Label")}</Th><Th>{t("Name")}</Th><Th>{t("Entity")}</Th><Th>{t("Type")}</Th><Th>{t("Status")}</Th><Th>{t("Delete")}</Th></tr></thead>
               <tbody>
                 {(fields ?? []).map((field) => (
                   <tr key={field.id}>
                     <Td className="font-medium">{field.label}</Td>
                     <Td>{field.name}</Td>
-                    <Td>{field.entity_type}</Td>
-                    <Td>{field.field_type}</Td>
+                    <Td>{t(field.entity_type)}</Td>
+                    <Td>{t(field.field_type)}</Td>
                     <Td><Badge value={field.is_active ? "active" : "left"} /></Td>
                     <Td>
                       <ConfirmForm
                         action={deleteCustomFieldAction}
-                        firstMessage={`Delete custom field ${field.label}? Saved values for this field will also be removed.`}
-                        secondMessage="Final confirmation: delete this custom field?"
+                        firstMessage={t("Delete custom field {label}? Saved values for this field will also be removed.", { label: field.label })}
+                        secondMessage={t("Final confirmation: delete this custom field?")}
                       >
                         <input name="id" type="hidden" value={field.id} />
                         <Button size="sm" type="submit" variant="destructive">
-                          Delete
+                          {t("Delete")}
                         </Button>
                       </ConfirmForm>
                     </Td>
@@ -90,7 +92,7 @@ export default async function CustomFieldsPage() {
             </Table>
             {!(fields ?? []).length ? (
               <div className="p-6">
-                <EmptyState message="No custom fields yet. Add one only for non-money metadata." />
+                <EmptyState message={t("No custom fields yet. Add one only for non-money metadata.")} />
               </div>
             ) : null}
           </CardContent>

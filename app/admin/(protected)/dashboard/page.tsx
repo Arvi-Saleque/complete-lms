@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, Td, Th } from "@/components/ui/table";
 import { deleteDemoPresetAction, insertDemoPresetAction } from "@/lib/actions";
+import { getAdminTranslator } from "@/lib/i18n-server";
 import { createClient } from "@/lib/supabase/server";
 import { currency, todayIso } from "@/lib/utils";
 
@@ -15,6 +16,7 @@ export default async function DashboardPage({
   searchParams: Promise<{ demo?: string }>;
 }) {
   const resolvedSearchParams = await searchParams;
+  const t = await getAdminTranslator();
   const supabase = await createClient();
   const today = todayIso();
 
@@ -70,52 +72,51 @@ export default async function DashboardPage({
   const nextExam = upcomingExam.data as any;
 
   const cards = [
-    ["Total students", students.count ?? 0],
-    ["Active students", activeStudents.count ?? 0],
-    ["Today's collection", currency(todayCollection)],
-    ["Total due", currency(totalDue)],
-    ["Present today", presentToday.count ?? 0]
+    [t("Total students"), students.count ?? 0],
+    [t("Active students"), activeStudents.count ?? 0],
+    [t("Today's collection"), currency(todayCollection)],
+    [t("Total due"), currency(totalDue)],
+    [t("Present today"), presentToday.count ?? 0]
   ];
 
   return (
     <>
       <PageHeader
-        title="Dashboard"
-        description="Daily snapshot for students, fees, hajira, and exams."
+        title={t("Dashboard")}
+        description={t("Daily snapshot for students, fees, hajira, and exams.")}
       />
       <Card className="mb-5 border-primary/20">
         <CardHeader>
-          <CardTitle>Demo preset</CardTitle>
+          <CardTitle>{t("Demo preset")}</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Insert a fresh demo dataset for client review. These buttons delete all school
-            records first, but keep the principal login/profile.
+            {t("Insert a fresh demo dataset for client review. These buttons delete all school records first, but keep the principal login/profile.")}
           </p>
         </CardHeader>
         <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <ConfirmForm
             action={insertDemoPresetAction}
-            firstMessage="This will create a fresh demo preset. If any school records already exist, they will be cleared first. Continue?"
-            secondMessage="Final confirmation: insert the fresh demo data now?"
+            firstMessage={t("This will create a fresh demo preset. If any school records already exist, they will be cleared first. Continue?")}
+            secondMessage={t("Final confirmation: insert the fresh demo data now?")}
           >
-            <Button type="submit">Insert fresh demo data</Button>
+            <Button type="submit">{t("Insert fresh demo data")}</Button>
           </ConfirmForm>
           <ConfirmForm
             action={deleteDemoPresetAction}
-            firstMessage="This will delete all school records. Continue?"
-            secondMessage="Final confirmation: delete all school records now?"
+            firstMessage={t("This will delete all school records. Continue?")}
+            secondMessage={t("Final confirmation: delete all school records now?")}
           >
             <Button type="submit" variant="destructive">
-              Delete all school data
+              {t("Delete all school data")}
             </Button>
           </ConfirmForm>
           {resolvedSearchParams.demo === "inserted" ? (
             <p className="text-sm font-medium text-emerald-700">
-              Demo preset inserted. Check students, fees, attendance, exams, and results.
+              {t("Demo preset inserted. Check students, fees, attendance, exams, and results.")}
             </p>
           ) : null}
           {resolvedSearchParams.demo === "deleted-all" ? (
             <p className="text-sm font-medium text-red-700">
-              All school records were deleted. Principal login is still available.
+              {t("All school records were deleted. Principal login is still available.")}
             </p>
           ) : null}
         </CardContent>
@@ -136,29 +137,29 @@ export default async function DashboardPage({
       <div className="mt-5 grid gap-4 xl:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Recent payments</CardTitle>
+            <CardTitle>{t("Recent payments")}</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <thead>
                 <tr>
-                  <Th>Student</Th>
-                  <Th>Fee</Th>
-                  <Th>Amount</Th>
-                  <Th>Date</Th>
+                  <Th>{t("Student")}</Th>
+                  <Th>{t("Fee")}</Th>
+                  <Th>{t("Amount")}</Th>
+                  <Th>{t("Date")}</Th>
                 </tr>
               </thead>
               <tbody>
                 {recentPaymentRows.map((payment) => (
                   <tr key={`${payment.receipt_no}-${payment.payment_date}-${payment.amount}`}>
-                    <Td>{payment.student_fee_records?.students?.name ?? "Unknown"}</Td>
-                    <Td>{payment.student_fee_records?.fee_types?.name ?? "Fee"}</Td>
+                    <Td>{payment.student_fee_records?.students?.name ?? t("Unknown")}</Td>
+                    <Td>{payment.student_fee_records?.fee_types?.name ?? t("Fee")}</Td>
                     <Td>{currency(payment.amount)}</Td>
                     <Td>{payment.payment_date}</Td>
                   </tr>
                 ))}
                 {!recentPaymentRows.length ? (
-                  <tr><Td colSpan={4}>No recent payments yet.</Td></tr>
+                  <tr><Td colSpan={4}>{t("No recent payments yet.")}</Td></tr>
                 ) : null}
               </tbody>
             </Table>
@@ -166,16 +167,16 @@ export default async function DashboardPage({
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Unpaid students</CardTitle>
+            <CardTitle>{t("Unpaid students")}</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <thead>
                 <tr>
-                  <Th>Student</Th>
-                  <Th>Fee</Th>
-                  <Th>Due</Th>
-                  <Th>Status</Th>
+                  <Th>{t("Student")}</Th>
+                  <Th>{t("Fee")}</Th>
+                  <Th>{t("Due")}</Th>
+                  <Th>{t("Status")}</Th>
                 </tr>
               </thead>
               <tbody>
@@ -183,7 +184,7 @@ export default async function DashboardPage({
                   <tr key={`${record.students?.id}-${record.fee_types?.name}`}>
                     <Td>
                       <Link className="font-medium text-primary" href={`/admin/students/${record.students?.id}`}>
-                        {record.students?.name ?? "Unknown"}
+                        {record.students?.name ?? t("Unknown")}
                       </Link>
                     </Td>
                     <Td>{record.fee_types?.name}</Td>
@@ -194,7 +195,7 @@ export default async function DashboardPage({
                   </tr>
                 ))}
                 {!unpaidRows.length ? (
-                  <tr><Td colSpan={4}>No unpaid fee records.</Td></tr>
+                  <tr><Td colSpan={4}>{t("No unpaid fee records.")}</Td></tr>
                 ) : null}
               </tbody>
             </Table>
@@ -204,7 +205,7 @@ export default async function DashboardPage({
 
       <Card className="mt-5">
         <CardHeader>
-          <CardTitle>Upcoming exam</CardTitle>
+          <CardTitle>{t("Upcoming exam")}</CardTitle>
         </CardHeader>
         <CardContent>
           {nextExam ? (
@@ -212,10 +213,13 @@ export default async function DashboardPage({
               <Link className="font-medium text-primary" href={`/admin/exams/${nextExam.id}`}>
                 {nextExam.name}
               </Link>{" "}
-              for {nextExam.classes?.name} starts on {nextExam.start_date}.
+              {t("for {className} starts on {date}.", {
+                className: nextExam.classes?.name,
+                date: nextExam.start_date
+              })}
             </p>
           ) : (
-            <p className="text-sm text-muted-foreground">No upcoming exam is scheduled.</p>
+            <p className="text-sm text-muted-foreground">{t("No upcoming exam is scheduled.")}</p>
           )}
         </CardContent>
       </Card>

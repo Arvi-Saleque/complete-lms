@@ -6,9 +6,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty";
 import { Table, Td, Th } from "@/components/ui/table";
 import { deleteExamAction } from "@/lib/actions";
+import { getAdminTranslator } from "@/lib/i18n-server";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function ExamsPage() {
+  const t = await getAdminTranslator();
   const supabase = await createClient();
   const { data: exams } = await supabase
     .from("exams")
@@ -19,34 +21,34 @@ export default async function ExamsPage() {
   return (
     <>
       <PageHeader
-        title="Exams"
-        description="Create exams and assign dynamic subjects."
+        title={t("Exams")}
+        description={t("Create exams and assign dynamic subjects.")}
         actionHref="/admin/exams/new"
-        actionLabel="Create exam"
+        actionLabel={t("Create exam")}
       />
       <Card>
         <CardContent className="p-0">
           <Table>
-            <thead><tr><Th>Name</Th><Th>Class</Th><Th>Session</Th><Th>Dates</Th><Th>Actions</Th></tr></thead>
+            <thead><tr><Th>{t("Name")}</Th><Th>{t("Class")}</Th><Th>{t("Session")}</Th><Th>{t("Dates")}</Th><Th>{t("Actions")}</Th></tr></thead>
             <tbody>
               {examRows.map((exam) => (
                 <tr key={exam.id}>
                   <Td className="font-medium">{exam.name}</Td>
                   <Td>{exam.classes?.name ?? "-"}</Td>
                   <Td>{exam.session_year}</Td>
-                  <Td>{exam.start_date ?? "-"} to {exam.end_date ?? "-"}</Td>
+                  <Td>{t("{start} to {end}", { start: exam.start_date ?? "-", end: exam.end_date ?? "-" })}</Td>
                   <Td>
                     <div className="flex flex-wrap gap-2">
-                      <Button asChild size="sm" variant="outline"><Link href={`/admin/exams/${exam.id}`}>Open</Link></Button>
-                      <Button asChild size="sm" variant="outline"><Link href={`/admin/exams/${exam.id}/results`}>Results</Link></Button>
+                      <Button asChild size="sm" variant="outline"><Link href={`/admin/exams/${exam.id}`}>{t("Open")}</Link></Button>
+                      <Button asChild size="sm" variant="outline"><Link href={`/admin/exams/${exam.id}/results`}>{t("Results")}</Link></Button>
                       <ConfirmForm
                         action={deleteExamAction}
-                        firstMessage={`Delete exam ${exam.name}? Subjects and marks for this exam will also be removed.`}
-                        secondMessage="Final confirmation: delete this exam permanently?"
+                        firstMessage={t("Delete exam {name}? Subjects and marks for this exam will also be removed.", { name: exam.name })}
+                        secondMessage={t("Final confirmation: delete this exam permanently?")}
                       >
                         <input name="id" type="hidden" value={exam.id} />
                         <Button size="sm" type="submit" variant="destructive">
-                          Delete
+                          {t("Delete")}
                         </Button>
                       </ConfirmForm>
                     </div>
@@ -57,7 +59,7 @@ export default async function ExamsPage() {
           </Table>
           {!examRows.length ? (
             <div className="p-6">
-              <EmptyState message="No exams yet. Create an exam, then assign subjects and enter marks." />
+              <EmptyState message={t("No exams yet. Create an exam, then assign subjects and enter marks.")} />
             </div>
           ) : null}
         </CardContent>

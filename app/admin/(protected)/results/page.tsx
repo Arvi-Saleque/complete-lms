@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/ui/empty";
 import { Input, Select } from "@/components/ui/form";
 import { Table, Td, Th } from "@/components/ui/table";
 import { saveMarksAction } from "@/lib/actions";
+import { getAdminTranslator } from "@/lib/i18n-server";
 import { pageFromSearch, rangeForPage } from "@/lib/pagination";
 import { calculateSubjectGrade } from "@/lib/results";
 import { createClient } from "@/lib/supabase/server";
@@ -23,6 +24,7 @@ export default async function ResultsPage({
   }>;
 }) {
   const resolvedSearchParams = await searchParams;
+  const t = await getAdminTranslator();
   const page = pageFromSearch(resolvedSearchParams.page);
   const { from, to } = rangeForPage(page);
   const supabase = await createClient();
@@ -81,30 +83,30 @@ export default async function ResultsPage({
 
   return (
     <>
-      <PageHeader title="Edit Results / Marks Entry" description="Select an exam and subject, then enter marks for active students in that exam class." />
+      <PageHeader title={t("Edit Results / Marks Entry")} description={t("Select an exam and subject, then enter marks for active students in that exam class.")} />
       {resolvedSearchParams.result === "saved" ? (
         <div className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
-          Marks saved. Total, grade, and pass/fail are calculated automatically.
+          {t("Marks saved. Total, grade, and pass/fail are calculated automatically.")}
         </div>
       ) : null}
       {resolvedSearchParams.result_error ? (
         <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          {resolvedSearchParams.result_error}
+          {t(resolvedSearchParams.result_error)}
         </div>
       ) : null}
       <Card className="mb-4">
         <CardContent className="pt-4">
           <form className="grid gap-3 md:grid-cols-4">
             <Select name="exam" required defaultValue={resolvedSearchParams.exam ?? ""}>
-              <option value="">Select exam</option>
+              <option value="">{t("Select exam")}</option>
               {examRows.map((item) => (
                 <option key={item.id} value={item.id}>
-                  {item.name} - {item.classes?.name ?? "Class"}
+                  {item.name} - {item.classes?.name ?? t("Class")}
                 </option>
               ))}
             </Select>
             <Select name="subject" required defaultValue={resolvedSearchParams.subject ?? ""}>
-              <option value="">Select subject</option>
+              <option value="">{t("Select subject")}</option>
               {availableSubjects.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.name}
@@ -112,7 +114,7 @@ export default async function ResultsPage({
               ))}
             </Select>
             <input name="page" type="hidden" value="1" />
-            <Button type="submit">Load marks sheet</Button>
+            <Button type="submit">{t("Load marks sheet")}</Button>
           </form>
         </CardContent>
       </Card>
@@ -138,7 +140,7 @@ export default async function ResultsPage({
       {!resolvedSearchParams.exam ? (
         <Card>
           <CardContent className="p-6">
-            <EmptyState message="Select an exam and subject to load the marks entry sheet." />
+            <EmptyState message={t("Select an exam and subject to load the marks entry sheet.")} />
           </CardContent>
         </Card>
       ) : null}
@@ -146,7 +148,7 @@ export default async function ResultsPage({
       {resolvedSearchParams.exam && !availableSubjects.length ? (
         <Card>
           <CardContent className="p-6">
-            <EmptyState message="No subjects are assigned to this exam yet. Open the exam setup page and assign subjects first." />
+            <EmptyState message={t("No subjects are assigned to this exam yet. Open the exam setup page and assign subjects first.")} />
           </CardContent>
         </Card>
       ) : null}
@@ -161,14 +163,14 @@ export default async function ResultsPage({
               <Table>
                 <thead>
                   <tr>
-                    <Th>Roll</Th>
-                    <Th>Name</Th>
-                    <Th>Written</Th>
-                    <Th>Oral</Th>
-                    <Th>Total</Th>
-                    <Th>Auto grade</Th>
-                    <Th>Result</Th>
-                    <Th>Note</Th>
+                    <Th>{t("Roll")}</Th>
+                    <Th>{t("Name")}</Th>
+                    <Th>{t("Written")}</Th>
+                    <Th>{t("Oral")}</Th>
+                    <Th>{t("Total")}</Th>
+                    <Th>{t("Auto grade")}</Th>
+                    <Th>{t("Result")}</Th>
+                    <Th>{t("Note")}</Th>
                   </tr>
                 </thead>
               <tbody>
@@ -184,7 +186,7 @@ export default async function ResultsPage({
                         <Td><Input name={`written_${student.id}`} type="number" min="0" max={fullMark} defaultValue={existing?.written_mark ?? ""} placeholder="0" /></Td>
                         <Td><Input name={`oral_${student.id}`} type="number" min="0" max={fullMark} defaultValue={existing?.oral_mark ?? ""} placeholder="0" /></Td>
                         <Td>{existing ? total : "-"}</Td>
-                        <Td>{existing ? autoGrade : "After save"}</Td>
+                        <Td>{existing ? autoGrade : t("After save")}</Td>
                         <Td>{existing ? <Badge value={status} /> : <Badge value="not entered" />}</Td>
                         <Td><Input name={`note_${student.id}`} defaultValue={existing?.note ?? ""} /></Td>
                       </tr>
@@ -194,28 +196,33 @@ export default async function ResultsPage({
               </Table>
               {(students ?? []).length ? (
                 <div className="p-4">
-                  <PendingButton pendingLabel="Saving marks..." type="submit">
-                    Save marks
+                  <PendingButton pendingLabel={t("Saving marks...")} type="submit">
+                    {t("Save marks")}
                   </PendingButton>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    Full mark: {fullMark}. Minimum pass mark: {passMark}. Grade is calculated after saving.
+                    {t("Full mark: {fullMark}. Minimum pass mark: {passMark}. Grade is calculated after saving.", {
+                      fullMark,
+                      passMark
+                    })}
                   </p>
                 </div>
               ) : (
                 <div className="p-4">
                   <EmptyState
-                    message={`No active students found for ${Array.isArray((exam as any)?.classes) ? (exam as any).classes[0]?.name : (exam as any)?.classes?.name ?? "this exam class"}. Add students to that class first, or edit/create the exam for the correct class.`}
+                    message={t("No active students found for {className}. Add students to that class first, or edit/create the exam for the correct class.", {
+                      className: Array.isArray((exam as any)?.classes) ? (exam as any).classes[0]?.name : (exam as any)?.classes?.name ?? t("this exam class")
+                    })}
                   />
                 </div>
               )}
               <div className="flex items-center justify-between border-t p-4 text-sm text-muted-foreground">
-                <span>Showing up to 20 students on this sheet.</span>
+                <span>{t("Showing up to 20 students on this sheet.")}</span>
                 <div className="flex gap-2">
                   <Button asChild size="sm" variant="outline">
-                    <a href={`/admin/results?exam=${selectedExam}&subject=${selectedSubject}&page=${Math.max(page - 1, 1)}`}>Previous</a>
+                    <a href={`/admin/results?exam=${selectedExam}&subject=${selectedSubject}&page=${Math.max(page - 1, 1)}`}>{t("Previous")}</a>
                   </Button>
                   <Button asChild size="sm" variant="outline">
-                    <a href={`/admin/results?exam=${selectedExam}&subject=${selectedSubject}&page=${page + 1}`}>Next</a>
+                    <a href={`/admin/results?exam=${selectedExam}&subject=${selectedSubject}&page=${page + 1}`}>{t("Next")}</a>
                   </Button>
                 </div>
               </div>

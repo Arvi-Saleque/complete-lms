@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/form";
+import { getAdminLanguage } from "@/lib/i18n-server";
+import { translator } from "@/lib/i18n";
 import { pageHref, totalPages } from "@/lib/pagination";
 
-export function Pagination({
+export async function Pagination({
   pathname,
   searchParams,
   page,
@@ -14,6 +16,7 @@ export function Pagination({
   page: number;
   count: number | null | undefined;
 }) {
+  const t = translator(await getAdminLanguage());
   const pages = totalPages(count);
   if (pages <= 1) return null;
   const visiblePages = Array.from({ length: pages }, (_, index) => index + 1).filter(
@@ -23,7 +26,7 @@ export function Pagination({
   return (
     <div className="flex flex-col gap-3 border-t p-3 text-sm lg:flex-row lg:items-center lg:justify-between">
       <span className="text-muted-foreground">
-        Page {page} of {pages}
+        {t("Page {page} of {pages}", { page, pages })}
       </span>
       <div className="flex flex-wrap items-center gap-2">
         <form action={pathname} className="flex items-center gap-2">
@@ -32,22 +35,22 @@ export function Pagination({
               <input key={key} name={key} type="hidden" value={value} />
             ) : null
           )}
-          <span className="text-muted-foreground">Go to</span>
+          <span className="text-muted-foreground">{t("Go to")}</span>
           <Select className="h-8 w-24" name="page" defaultValue={String(page)}>
             {Array.from({ length: pages }, (_, index) => index + 1).map((item) => (
               <option key={item} value={item}>
-                Page {item}
+                {t("Page {page}", { page: item })}
               </option>
             ))}
           </Select>
           <Button size="sm" type="submit" variant="secondary">
-            Go
+            {t("Go")}
           </Button>
         </form>
         <div className="flex flex-wrap gap-1">
           <Button asChild size="sm" variant="outline">
             <Link href={pageHref(pathname, searchParams, Math.max(page - 1, 1))}>
-              Previous
+              {t("Previous")}
             </Link>
           </Button>
           {visiblePages.map((item, index) => {
@@ -69,7 +72,7 @@ export function Pagination({
           })}
           <Button asChild size="sm" variant="outline">
             <Link href={pageHref(pathname, searchParams, Math.min(page + 1, pages))}>
-              Next
+              {t("Next")}
             </Link>
           </Button>
         </div>

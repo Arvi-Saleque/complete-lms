@@ -1,16 +1,22 @@
 import type { Metadata } from "next";
+import { getAdminLanguage, getAdminTranslator } from "@/lib/i18n-server";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "Ikra Academy Admin",
-  description: "Student, fees, attendance, and results admin panel"
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getAdminTranslator();
 
-export default function RootLayout({
+  return {
+    title: t("Ikra Academy Admin"),
+    description: t("Student, fees, attendance, and results admin panel")
+  };
+}
+
+export default async function RootLayout({
   children
 }: Readonly<{ children: React.ReactNode }>) {
+  const language = await getAdminLanguage();
   return (
-    <html lang="en">
+    <html lang={language === "bn" ? "bn" : "en"}>
       <body>{children}</body>
     </html>
   );

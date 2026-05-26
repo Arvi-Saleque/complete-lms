@@ -1,4 +1,6 @@
 import { cn } from "@/lib/utils";
+import { translateValue } from "@/lib/i18n";
+import { getAdminLanguage } from "@/lib/i18n-server";
 
 const tones: Record<string, string> = {
   paid: "bg-emerald-100 text-emerald-800",
@@ -16,7 +18,7 @@ const tones: Record<string, string> = {
   leave: "bg-sky-100 text-sky-800"
 };
 
-export function Badge({
+export async function Badge({
   value,
   className
 }: {
@@ -24,6 +26,7 @@ export function Badge({
   className?: string;
 }) {
   const label = value ?? "unknown";
+  const language = await getAdminLanguage();
   return (
     <span
       className={cn(
@@ -32,7 +35,7 @@ export function Badge({
         className
       )}
     >
-      {label.replaceAll("_", " ")}
+      {translateValue(language, label)}
     </span>
   );
 }

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Label, Select, Textarea } from "@/components/ui/form";
 import { studentStatuses } from "@/lib/options";
 import { currentBangladeshYear } from "@/lib/utils";
+import { translator, translateOption, type AdminLanguage } from "@/lib/i18n";
 import Link from "next/link";
 
 type StudentFormProps = {
@@ -14,6 +15,7 @@ type StudentFormProps = {
   student?: Record<string, any>;
   submitLabel: string;
   error?: string;
+  language: AdminLanguage;
 };
 
 export function StudentForm({
@@ -22,8 +24,10 @@ export function StudentForm({
   sections,
   student,
   submitLabel,
-  error
+  error,
+  language
 }: StudentFormProps) {
+  const t = translator(language);
   const initialClassId = student?.class_id ?? "";
   const initialSectionId =
     student?.section_id &&
@@ -50,15 +54,15 @@ export function StudentForm({
         </div>
       ) : null}
       <div className="space-y-2">
-        <Label htmlFor="name">Student name</Label>
+        <Label htmlFor="name">{t("Student name")}</Label>
         <Input id="name" name="name" required defaultValue={student?.name ?? ""} />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="roll">Roll</Label>
+        <Label htmlFor="roll">{t("Roll")}</Label>
         <Input id="roll" name="roll" required defaultValue={student?.roll ?? ""} />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="class_id">Class</Label>
+        <Label htmlFor="class_id">{t("Class")}</Label>
         <Select
           id="class_id"
           name="class_id"
@@ -73,7 +77,7 @@ export function StudentForm({
             }
           }}
         >
-          <option value="">Select class</option>
+          <option value="">{t("Select class")}</option>
           {classes.map((item) => (
             <option key={item.id} value={item.id}>
               {item.name}
@@ -82,16 +86,16 @@ export function StudentForm({
         </Select>
         {!classes.length ? (
           <p className="text-xs text-muted-foreground">
-            No classes found. Create one in{" "}
+            {t("No classes found. Create one in")}{" "}
             <Link className="font-medium text-primary" href="/admin/settings/classes">
-              Classes & Sections
+              {t("Classes & Sections")}
             </Link>
             .
           </p>
         ) : null}
       </div>
       <div className="space-y-2">
-        <Label htmlFor="section_id">Section</Label>
+        <Label htmlFor="section_id">{t("Section")}</Label>
         <Select
           id="section_id"
           name="section_id"
@@ -99,7 +103,7 @@ export function StudentForm({
           onChange={(event) => setSelectedSectionId(event.target.value)}
           disabled={!selectedClassId || !classSections.length}
         >
-          <option value="">No section</option>
+          <option value="">{t("No section")}</option>
           {classSections.map((item) => (
             <option key={item.id} value={item.id}>
               {item.name}
@@ -108,7 +112,7 @@ export function StudentForm({
         </Select>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="session_year">Session / Year</Label>
+        <Label htmlFor="session_year">{t("Session / Year")}</Label>
         <Input
           id="session_year"
           name="session_year"
@@ -117,25 +121,25 @@ export function StudentForm({
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="status">Status</Label>
+        <Label htmlFor="status">{t("Status")}</Label>
         <Select id="status" name="status" defaultValue={student?.status ?? "active"}>
           {studentStatuses.map((status) => (
             <option key={status} value={status}>
-              {status}
+              {translateOption(language, status)}
             </option>
           ))}
         </Select>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="father_name">Father name</Label>
+        <Label htmlFor="father_name">{t("Father name")}</Label>
         <Input id="father_name" name="father_name" defaultValue={student?.father_name ?? ""} />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="mother_name">Mother name</Label>
+        <Label htmlFor="mother_name">{t("Mother name")}</Label>
         <Input id="mother_name" name="mother_name" defaultValue={student?.mother_name ?? ""} />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="guardian_phone">Guardian phone</Label>
+        <Label htmlFor="guardian_phone">{t("Guardian phone")}</Label>
         <Input
           id="guardian_phone"
           name="guardian_phone"
@@ -143,7 +147,7 @@ export function StudentForm({
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="admission_date">Admission date</Label>
+        <Label htmlFor="admission_date">{t("Admission date")}</Label>
         <Input
           id="admission_date"
           name="admission_date"
@@ -152,11 +156,11 @@ export function StudentForm({
         />
       </div>
       <div className="space-y-2 md:col-span-2">
-        <Label htmlFor="address">Address</Label>
+        <Label htmlFor="address">{t("Address")}</Label>
         <Textarea id="address" name="address" defaultValue={student?.address ?? ""} />
       </div>
       <div className="md:col-span-2">
-        <Button type="submit">{submitLabel}</Button>
+        <Button type="submit">{t(submitLabel)}</Button>
       </div>
     </form>
   );

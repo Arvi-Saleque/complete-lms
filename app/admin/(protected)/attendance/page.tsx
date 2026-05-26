@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input, Select } from "@/components/ui/form";
 import { Table, Td, Th } from "@/components/ui/table";
 import { saveAttendanceAction } from "@/lib/actions";
+import { getAdminLanguage, getAdminTranslator } from "@/lib/i18n-server";
 import { attendanceStatuses } from "@/lib/options";
 import { createClient } from "@/lib/supabase/server";
 import { todayIso } from "@/lib/utils";
@@ -15,6 +16,7 @@ export default async function AttendancePage({
   searchParams: Promise<{ class?: string; section?: string; date?: string }>;
 }) {
   const resolvedSearchParams = await searchParams;
+  const [language, t] = await Promise.all([getAdminLanguage(), getAdminTranslator()]);
   const supabase = await createClient();
   const date = resolvedSearchParams.date ?? todayIso();
   const selectedClassId = resolvedSearchParams.class ?? "";
@@ -60,7 +62,7 @@ export default async function AttendancePage({
 
   return (
     <>
-      <PageHeader title="Edit Hajira / Attendance" description="Mark or update daily attendance by class and date." />
+      <PageHeader title={t("Edit Hajira / Attendance")} description={t("Mark or update daily attendance by class and date.")} />
       <Card className="mb-4">
         <CardContent className="pt-4">
           <AttendanceFilterForm
@@ -69,6 +71,7 @@ export default async function AttendancePage({
             sections={sections ?? []}
             selectedClassId={selectedClassId}
             selectedSectionId={selectedSectionId}
+            language={language}
           />
         </CardContent>
       </Card>
@@ -76,7 +79,7 @@ export default async function AttendancePage({
       {!selectedClassId ? (
         <Card>
           <CardContent className="p-6 text-sm text-muted-foreground">
-            Select a class and date to load the attendance sheet.
+            {t("Select a class and date to load the attendance sheet.")}
           </CardContent>
         </Card>
       ) : null}
@@ -84,8 +87,12 @@ export default async function AttendancePage({
       {selectedClassId && !(students ?? []).length ? (
         <Card>
           <CardContent className="p-6 text-sm text-muted-foreground">
-            No active students found for {selectedClass?.name ?? "this class"}
-            {selectedSection ? `, section ${selectedSection.name}` : ""}.
+            {t("No active students found for {className}{sectionText}.", {
+              className: selectedClass?.name ?? t("this class"),
+              sectionText: selectedSection
+                ? t(", section {sectionName}", { sectionName: selectedSection.name })
+                : ""
+            })}
           </CardContent>
         </Card>
       ) : null}
@@ -96,7 +103,7 @@ export default async function AttendancePage({
           <Card>
             <CardContent className="p-0">
               <Table>
-                <thead><tr><Th>Roll</Th><Th>Name</Th><Th>Status</Th><Th>Note</Th></tr></thead>
+                <thead><tr><Th>{t("Roll")}</Th><Th>{t("Name")}</Th><Th>{t("Status")}</Th><Th>{t("Note")}</Th></tr></thead>
                 <tbody>
                   {(students ?? []).map((student) => {
                     const existing = byStudent.get(student.id);
@@ -107,7 +114,7 @@ export default async function AttendancePage({
                         <Td>
                           <Select name={`status_${student.id}`} defaultValue={existing?.status ?? "present"}>
                             {attendanceStatuses.map((status) => (
-                              <option key={status} value={status}>{status}</option>
+                              <option key={status} value={status}>{t(status)}</option>
                             ))}
                           </Select>
                         </Td>
@@ -120,12 +127,17 @@ export default async function AttendancePage({
                 </tbody>
               </Table>
               <div className="p-4">
-                <PendingButton pendingLabel="Saving attendance..." type="submit">
-                  Save attendance
+                <PendingButton pendingLabel={t("Saving attendance...")} type="submit">
+                  {t("Save attendance")}
                 </PendingButton>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Showing all {(students ?? []).length} active students for {selectedClass?.name ?? "the selected class"}
-                  {selectedSection ? `, section ${selectedSection.name}` : ""}.
+                  {t("Showing all {count} active students for {className}{sectionText}.", {
+                    count: (students ?? []).length,
+                    className: selectedClass?.name ?? t("the selected class"),
+                    sectionText: selectedSection
+                      ? t(", section {sectionName}", { sectionName: selectedSection.name })
+                      : ""
+                  })}
                 </p>
               </div>
             </CardContent>

@@ -5,6 +5,7 @@ import { PrintButton } from "@/components/admin/print-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, Td } from "@/components/ui/table";
+import { getAdminTranslator } from "@/lib/i18n-server";
 import { institution } from "@/lib/institution";
 import { createClient } from "@/lib/supabase/server";
 import { currency } from "@/lib/utils";
@@ -15,6 +16,7 @@ export default async function PaymentReceiptPage({
   params: Promise<{ id: string }>;
 }) {
   const resolvedParams = await params;
+  const t = await getAdminTranslator();
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   const [
@@ -41,15 +43,15 @@ export default async function PaymentReceiptPage({
 
   return (
     <div className="print-page">
-      <PageHeader title="Payment Receipt" description={`Receipt ${receiptNo}`} />
+      <PageHeader title={t("Payment Receipt")} description={t("Receipt {receiptNo}", { receiptNo })} />
       <div className="mb-4 flex gap-2 print-hide">
-        <PrintButton label="Print receipt" />
+        <PrintButton label={t("Print receipt")} />
         <Button asChild variant="outline">
-          <Link href="/admin/fees">Back to fees</Link>
+          <Link href="/admin/fees">{t("Back to fees")}</Link>
         </Button>
         {student?.id ? (
           <Button asChild variant="outline">
-            <Link href={`/admin/students/${student.id}`}>Student details</Link>
+            <Link href={`/admin/students/${student.id}`}>{t("Student details")}</Link>
           </Button>
         ) : null}
       </div>
@@ -63,37 +65,37 @@ export default async function PaymentReceiptPage({
           {institution.phone ? (
             <p className="text-sm text-muted-foreground">{institution.phone}</p>
           ) : null}
-          <p className="text-sm text-muted-foreground">Official payment receipt</p>
+          <p className="text-sm text-muted-foreground">{t("Official payment receipt")}</p>
         </CardHeader>
         <CardContent className="space-y-5 p-6">
           <div className="grid gap-3 text-sm sm:grid-cols-2">
             <div>
-              <p className="text-muted-foreground">Receipt number</p>
+              <p className="text-muted-foreground">{t("Receipt number")}</p>
               <p className="font-medium">{receiptNo}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Payment date</p>
+              <p className="text-muted-foreground">{t("Payment date")}</p>
               <p className="font-medium">{paymentRow.payment_date}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Received by</p>
-              <p className="font-medium">{profile?.full_name ?? "Principal"}</p>
+              <p className="text-muted-foreground">{t("Received by")}</p>
+              <p className="font-medium">{profile?.full_name ?? t("Principal")}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Payment method</p>
-              <p className="font-medium capitalize">{paymentRow.payment_method ?? "cash"}</p>
+              <p className="text-muted-foreground">{t("Payment method")}</p>
+              <p className="font-medium capitalize">{t(paymentRow.payment_method ?? "cash")}</p>
             </div>
           </div>
 
           <Table>
             <tbody>
-              <tr><Td className="font-medium">Student</Td><Td>{student?.name ?? "-"}</Td></tr>
-              <tr><Td className="font-medium">Roll</Td><Td>{student?.roll ?? "-"}</Td></tr>
-              <tr><Td className="font-medium">Class / Section</Td><Td>{student?.classes?.name ?? "-"} / {student?.sections?.name ?? "-"}</Td></tr>
-              <tr><Td className="font-medium">Fee type</Td><Td>{feeRecord?.fee_types?.name ?? "-"}</Td></tr>
-              <tr><Td className="font-medium">Month / Session</Td><Td>{feeRecord?.month ?? "-"} / {feeRecord?.session_year ?? "-"}</Td></tr>
-              <tr><Td className="font-medium">Payment amount</Td><Td className="text-lg font-semibold">{currency(paymentRow.amount)}</Td></tr>
-              <tr><Td className="font-medium">Note</Td><Td>{paymentRow.note ?? "-"}</Td></tr>
+              <tr><Td className="font-medium">{t("Student")}</Td><Td>{student?.name ?? "-"}</Td></tr>
+              <tr><Td className="font-medium">{t("Roll")}</Td><Td>{student?.roll ?? "-"}</Td></tr>
+              <tr><Td className="font-medium">{t("Class / Section")}</Td><Td>{student?.classes?.name ?? "-"} / {student?.sections?.name ?? "-"}</Td></tr>
+              <tr><Td className="font-medium">{t("Fee type")}</Td><Td>{feeRecord?.fee_types?.name ?? "-"}</Td></tr>
+              <tr><Td className="font-medium">{t("Month / Session")}</Td><Td>{feeRecord?.month ? t(feeRecord.month) : "-"} / {feeRecord?.session_year ?? "-"}</Td></tr>
+              <tr><Td className="font-medium">{t("Payment amount")}</Td><Td className="text-lg font-semibold">{currency(paymentRow.amount)}</Td></tr>
+              <tr><Td className="font-medium">{t("Note")}</Td><Td>{paymentRow.note ?? "-"}</Td></tr>
             </tbody>
           </Table>
         </CardContent>

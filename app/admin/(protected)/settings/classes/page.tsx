@@ -11,11 +11,12 @@ import {
   deleteClassAction,
   deleteSectionAction
 } from "@/lib/actions";
+import { getAdminTranslator } from "@/lib/i18n-server";
 import { createClient } from "@/lib/supabase/server";
 
-function settingsError(code?: string) {
+function settingsError(t: (text: string) => string, code?: string) {
   if (code === "section-exists") {
-    return "That section already exists for the selected class. Use a different section name for that class.";
+    return t("That section already exists for the selected class. Use a different section name for that class.");
   }
   return undefined;
 }
@@ -26,6 +27,7 @@ export default async function ClassesSettingsPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const resolvedSearchParams = await searchParams;
+  const t = await getAdminTranslator();
   const supabase = await createClient();
   const [{ data: classes }, { data: sections }] = await Promise.all([
     supabase.from("classes").select("*").order("sort_order"),
@@ -34,13 +36,13 @@ export default async function ClassesSettingsPage({
 
   const classRows = (classes ?? []) as any[];
   const sectionRows = (sections ?? []) as any[];
-  const error = settingsError(resolvedSearchParams.error);
+  const error = settingsError(t, resolvedSearchParams.error);
 
   return (
     <>
       <PageHeader
-        title="Classes & Sections"
-        description="Create classes first, then add sections. Students depend on these records."
+        title={t("Classes & Sections")}
+        description={t("Create classes first, then add sections. Students depend on these records.")}
       />
       {error ? (
         <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
@@ -51,37 +53,37 @@ export default async function ClassesSettingsPage({
         <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Add class</CardTitle>
+              <CardTitle>{t("Add class")}</CardTitle>
             </CardHeader>
             <CardContent>
               <form action={createClassAction} className="space-y-3">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Class name</Label>
-                  <Input id="name" name="name" required placeholder="Class 1" />
+                  <Label htmlFor="name">{t("Class name")}</Label>
+                  <Input id="name" name="name" required placeholder={t("Class 1")} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="sort_order">Sort order</Label>
+                  <Label htmlFor="sort_order">{t("Sort order")}</Label>
                   <Input id="sort_order" name="sort_order" type="number" defaultValue="0" />
                 </div>
                 <label className="flex items-center gap-2 text-sm">
                   <input name="is_active" type="checkbox" defaultChecked />
-                  Active
+                  {t("Active")}
                 </label>
-                <Button type="submit">Save class</Button>
+                <Button type="submit">{t("Save class")}</Button>
               </form>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Add section</CardTitle>
+              <CardTitle>{t("Add section")}</CardTitle>
             </CardHeader>
             <CardContent>
               <form action={createSectionAction} className="space-y-3">
                 <div className="space-y-2">
-                  <Label htmlFor="class_id">Class</Label>
+                  <Label htmlFor="class_id">{t("Class")}</Label>
                   <Select id="class_id" name="class_id" required>
-                    <option value="">Select class</option>
+                    <option value="">{t("Select class")}</option>
                     {classRows.map((item) => (
                       <option key={item.id} value={item.id}>
                         {item.name}
@@ -90,14 +92,14 @@ export default async function ClassesSettingsPage({
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="section_name">Section name</Label>
+                  <Label htmlFor="section_name">{t("Section name")}</Label>
                   <Input id="section_name" name="name" required placeholder="A" />
                 </div>
                 <label className="flex items-center gap-2 text-sm">
                   <input name="is_active" type="checkbox" defaultChecked />
-                  Active
+                  {t("Active")}
                 </label>
-                <Button type="submit">Save section</Button>
+                <Button type="submit">{t("Save section")}</Button>
               </form>
             </CardContent>
           </Card>
@@ -106,16 +108,16 @@ export default async function ClassesSettingsPage({
         <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Classes</CardTitle>
+              <CardTitle>{t("Classes")}</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
                 <thead>
                   <tr>
-                    <Th>Name</Th>
-                    <Th>Sort</Th>
-                    <Th>Status</Th>
-                    <Th>Delete</Th>
+                    <Th>{t("Name")}</Th>
+                    <Th>{t("Sort")}</Th>
+                    <Th>{t("Status")}</Th>
+                    <Th>{t("Delete")}</Th>
                   </tr>
                 </thead>
                 <tbody>
@@ -129,12 +131,12 @@ export default async function ClassesSettingsPage({
                       <Td>
                         <ConfirmForm
                           action={deleteClassAction}
-                          firstMessage={`Delete class ${item.name}? Students, sections, exams, and related records may block this if they still use it.`}
-                          secondMessage="Final confirmation: delete this class?"
+                          firstMessage={t("Delete class {name}? Students, sections, exams, and related records may block this if they still use it.", { name: item.name })}
+                          secondMessage={t("Final confirmation: delete this class?")}
                         >
                           <input name="id" type="hidden" value={item.id} />
                           <Button size="sm" type="submit" variant="destructive">
-                            Delete
+                            {t("Delete")}
                           </Button>
                         </ConfirmForm>
                       </Td>
@@ -144,7 +146,7 @@ export default async function ClassesSettingsPage({
               </Table>
               {!classRows.length ? (
                 <p className="p-4 text-sm text-muted-foreground">
-                  No classes yet. Create a class before adding students.
+                  {t("No classes yet. Create a class before adding students.")}
                 </p>
               ) : null}
             </CardContent>
@@ -152,16 +154,16 @@ export default async function ClassesSettingsPage({
 
           <Card>
             <CardHeader>
-              <CardTitle>Sections</CardTitle>
+              <CardTitle>{t("Sections")}</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
                 <thead>
                   <tr>
-                    <Th>Section</Th>
-                    <Th>Class</Th>
-                    <Th>Status</Th>
-                    <Th>Delete</Th>
+                    <Th>{t("Section")}</Th>
+                    <Th>{t("Class")}</Th>
+                    <Th>{t("Status")}</Th>
+                    <Th>{t("Delete")}</Th>
                   </tr>
                 </thead>
                 <tbody>
@@ -175,12 +177,12 @@ export default async function ClassesSettingsPage({
                       <Td>
                         <ConfirmForm
                           action={deleteSectionAction}
-                          firstMessage={`Delete section ${item.name}? Students using it may need editing first.`}
-                          secondMessage="Final confirmation: delete this section?"
+                          firstMessage={t("Delete section {name}? Students using it may need editing first.", { name: item.name })}
+                          secondMessage={t("Final confirmation: delete this section?")}
                         >
                           <input name="id" type="hidden" value={item.id} />
                           <Button size="sm" type="submit" variant="destructive">
-                            Delete
+                            {t("Delete")}
                           </Button>
                         </ConfirmForm>
                       </Td>
@@ -190,7 +192,7 @@ export default async function ClassesSettingsPage({
               </Table>
               {!sectionRows.length ? (
                 <p className="p-4 text-sm text-muted-foreground">
-                  No sections yet. Sections are optional, but useful for student grouping.
+                  {t("No sections yet. Sections are optional, but useful for student grouping.")}
                 </p>
               ) : null}
             </CardContent>
