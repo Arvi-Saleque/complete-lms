@@ -1,5 +1,7 @@
 import { ConfirmForm } from "@/components/admin/confirm-form";
 import { PageHeader } from "@/components/admin/page-header";
+import { BanglaInputHelp } from "@/components/ui/bangla-field";
+import { BanglaInput } from "@/components/ui/bangla-input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label, Select } from "@/components/ui/form";
@@ -25,9 +27,10 @@ export default async function NewExamPage() {
           <CardHeader><CardTitle>{t("Exam details")}</CardTitle></CardHeader>
           <CardContent>
             <form action={createExamAction} className="grid gap-4 md:grid-cols-2">
+              <div className="md:col-span-2"><BanglaInputHelp /></div>
               <div className="space-y-2">
                 <Label htmlFor="name">{t("Exam name")}</Label>
-                <Input id="name" name="name" required placeholder={t("First Term Exam")} />
+                <BanglaInput id="name" name="name" required placeholder={t("First Term Exam")} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="class_id">{t("Class")}</Label>
@@ -78,7 +81,7 @@ export default async function NewExamPage() {
           <CardHeader><CardTitle>{t("Subjects")}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <form action={createSubjectAction} className="grid gap-2">
-              <Input name="name" required placeholder={t("Subject name")} />
+              <BanglaInput name="name" required placeholder={t("Subject name")} />
               <Input name="code" placeholder={t("Code")} />
               <Button type="submit" variant="secondary">{t("Add subject")}</Button>
             </form>

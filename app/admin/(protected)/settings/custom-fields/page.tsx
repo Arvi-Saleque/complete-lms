@@ -1,6 +1,8 @@
 import { ConfirmForm } from "@/components/admin/confirm-form";
 import { PageHeader } from "@/components/admin/page-header";
 import { Badge } from "@/components/ui/badge";
+import { BanglaInputHelp } from "@/components/ui/bangla-field";
+import { BanglaInput } from "@/components/ui/bangla-input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty";
@@ -30,9 +32,10 @@ export default async function CustomFieldsPage() {
           <CardHeader><CardTitle>{t("Add custom field")}</CardTitle></CardHeader>
           <CardContent>
             <form action={createCustomFieldAction} className="space-y-3">
+              <BanglaInputHelp />
               <div className="space-y-2">
                 <Label htmlFor="label">{t("Label")}</Label>
-                <Input id="label" name="label" required placeholder={t("Birth certificate no")} />
+                <BanglaInput id="label" name="label" required placeholder={t("Birth certificate no")} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="name">{t("System name")}</Label>

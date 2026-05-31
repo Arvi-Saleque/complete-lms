@@ -2,7 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input, Label, Select, Textarea } from "@/components/ui/form";
+import { BanglaInputHelp } from "@/components/ui/bangla-field";
+import { BanglaInput } from "@/components/ui/bangla-input";
+import { BanglaTextarea } from "@/components/ui/bangla-textarea";
+import { Input, Label, Select } from "@/components/ui/form";
 import { studentStatuses } from "@/lib/options";
 import { currentBangladeshYear } from "@/lib/utils";
 import { translator, translateOption, type AdminLanguage } from "@/lib/i18n";
@@ -53,9 +56,12 @@ export function StudentForm({
           {error}
         </div>
       ) : null}
+      <div className="md:col-span-2">
+        <BanglaInputHelp />
+      </div>
       <div className="space-y-2">
         <Label htmlFor="name">{t("Student name")}</Label>
-        <Input id="name" name="name" required defaultValue={student?.name ?? ""} />
+        <BanglaInput id="name" name="name" required defaultValue={student?.name ?? ""} />
       </div>
       <div className="space-y-2">
         <Label htmlFor="roll">{t("Roll")}</Label>
@@ -132,11 +138,11 @@ export function StudentForm({
       </div>
       <div className="space-y-2">
         <Label htmlFor="father_name">{t("Father name")}</Label>
-        <Input id="father_name" name="father_name" defaultValue={student?.father_name ?? ""} />
+        <BanglaInput id="father_name" name="father_name" defaultValue={student?.father_name ?? ""} />
       </div>
       <div className="space-y-2">
         <Label htmlFor="mother_name">{t("Mother name")}</Label>
-        <Input id="mother_name" name="mother_name" defaultValue={student?.mother_name ?? ""} />
+        <BanglaInput id="mother_name" name="mother_name" defaultValue={student?.mother_name ?? ""} />
       </div>
       <div className="space-y-2">
         <Label htmlFor="guardian_phone">{t("Guardian phone")}</Label>
@@ -157,7 +163,7 @@ export function StudentForm({
       </div>
       <div className="space-y-2 md:col-span-2">
         <Label htmlFor="address">{t("Address")}</Label>
-        <Textarea id="address" name="address" defaultValue={student?.address ?? ""} />
+        <BanglaTextarea id="address" name="address" defaultValue={student?.address ?? ""} />
       </div>
       <div className="md:col-span-2">
         <Button type="submit">{t(submitLabel)}</Button>

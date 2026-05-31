@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requirePrincipal } from "@/lib/auth";
+import { normalizeBanglaText } from "@/lib/bangla/bijoy-to-unicode";
 import { deleteAllSchoolData, insertDemoPreset } from "@/lib/demo-preset";
 import { calculateSubjectGrade } from "@/lib/results";
 import { createClient } from "@/lib/supabase/server";
@@ -140,15 +141,15 @@ export async function createStudentAction(formData: FormData) {
   }
 
   const payload = {
-    name: String(formData.get("name") ?? "").trim(),
+    name: normalizeBanglaText(formData.get("name")) ?? "",
     roll: String(formData.get("roll") ?? "").trim(),
     class_id: classId,
     section_id: sectionId,
     session_year: String(formData.get("session_year") ?? "").trim(),
-    father_name: emptyToNull(formData.get("father_name")),
-    mother_name: emptyToNull(formData.get("mother_name")),
+    father_name: normalizeBanglaText(formData.get("father_name")),
+    mother_name: normalizeBanglaText(formData.get("mother_name")),
     guardian_phone: emptyToNull(formData.get("guardian_phone")),
-    address: emptyToNull(formData.get("address")),
+    address: normalizeBanglaText(formData.get("address")),
     admission_date: emptyToNull(formData.get("admission_date")),
     status: String(formData.get("status") ?? "active")
   };
@@ -183,15 +184,15 @@ export async function updateStudentAction(id: string, formData: FormData) {
   }
 
   const payload = {
-    name: String(formData.get("name") ?? "").trim(),
+    name: normalizeBanglaText(formData.get("name")) ?? "",
     roll: String(formData.get("roll") ?? "").trim(),
     class_id: classId,
     section_id: sectionId,
     session_year: String(formData.get("session_year") ?? "").trim(),
-    father_name: emptyToNull(formData.get("father_name")),
-    mother_name: emptyToNull(formData.get("mother_name")),
+    father_name: normalizeBanglaText(formData.get("father_name")),
+    mother_name: normalizeBanglaText(formData.get("mother_name")),
     guardian_phone: emptyToNull(formData.get("guardian_phone")),
-    address: emptyToNull(formData.get("address")),
+    address: normalizeBanglaText(formData.get("address")),
     admission_date: emptyToNull(formData.get("admission_date")),
     status: String(formData.get("status") ?? "active")
   };
@@ -238,7 +239,7 @@ export async function createClassAction(formData: FormData) {
   const supabase = await createClient();
 
   const { error } = await supabase.from("classes").insert({
-    name: String(formData.get("name") ?? "").trim(),
+    name: normalizeBanglaText(formData.get("name")) ?? "",
     sort_order: toNumber(formData.get("sort_order")),
     is_active: formData.get("is_active") === "on"
   });
@@ -266,7 +267,7 @@ export async function createSectionAction(formData: FormData) {
   await requirePrincipal();
   const supabase = await createClient();
   const classId = String(formData.get("class_id"));
-  const name = String(formData.get("name") ?? "").trim();
+  const name = normalizeBanglaText(formData.get("name")) ?? "";
 
   const { data: existing, error: existingError } = await supabase
     .from("sections")
@@ -308,8 +309,8 @@ export async function createFeeTypeAction(formData: FormData) {
   const supabase = await createClient();
 
   const { error } = await supabase.from("fee_types").insert({
-    name: String(formData.get("name") ?? "").trim(),
-    description: emptyToNull(formData.get("description")),
+    name: normalizeBanglaText(formData.get("name")) ?? "",
+    description: normalizeBanglaText(formData.get("description")),
     category: String(formData.get("category") ?? "other"),
     default_amount: toNumber(formData.get("default_amount")),
     frequency: String(formData.get("frequency") ?? "one_time"),
@@ -397,7 +398,7 @@ export async function createFeeRecordAction(formData: FormData) {
       session_year: sessionYear,
       due_date: emptyToNull(formData.get("due_date")),
       status: computed.status,
-      note: emptyToNull(formData.get("note"))
+      note: normalizeBanglaText(formData.get("note"))
     })
     .select("id")
     .single();
@@ -475,7 +476,7 @@ export async function addPaymentAction(formData: FormData) {
     p_student_fee_record_id: recordId,
     p_amount: amount,
     p_payment_date: paymentDate,
-    p_note: emptyToNull(formData.get("note"))
+    p_note: normalizeBanglaText(formData.get("note"))
   });
   if (paymentError) {
     redirect(feesRedirectUrl({
@@ -505,7 +506,7 @@ export async function saveAttendanceAction(formData: FormData) {
       student_id: key.replace("status_", ""),
       date,
       status: String(value),
-      note: emptyToNull(formData.get(`note_${key.replace("status_", "")}`))
+      note: normalizeBanglaText(formData.get(`note_${key.replace("status_", "")}`))
     }));
 
   if (rows.length) {
@@ -523,7 +524,7 @@ export async function createSubjectAction(formData: FormData) {
   await requirePrincipal();
   const supabase = await createClient();
   const { error } = await supabase.from("subjects").insert({
-    name: String(formData.get("name") ?? "").trim(),
+    name: normalizeBanglaText(formData.get("name")) ?? "",
     code: emptyToNull(formData.get("code"))
   });
   if (error) throw new Error(error.message);
@@ -566,7 +567,7 @@ export async function createExamAction(formData: FormData) {
   const { data, error } = await supabase
     .from("exams")
     .insert({
-      name: String(formData.get("name") ?? "").trim(),
+      name: normalizeBanglaText(formData.get("name")) ?? "",
       class_id: String(formData.get("class_id")),
       session_year: String(formData.get("session_year") ?? "").trim(),
       start_date: emptyToNull(formData.get("start_date")),
@@ -664,7 +665,7 @@ export async function saveMarksAction(formData: FormData) {
       const studentId = key.replace("written_", "");
       const writtenValue = String(formData.get(`written_${studentId}`) ?? "").trim();
       const oralValue = String(formData.get(`oral_${studentId}`) ?? "").trim();
-      const note = emptyToNull(formData.get(`note_${studentId}`));
+      const note = normalizeBanglaText(formData.get(`note_${studentId}`));
       if (!writtenValue && !oralValue && !note) return null;
       const written = toNumber(writtenValue);
       const oral = toNumber(oralValue);
@@ -718,7 +719,7 @@ export async function createCustomFieldAction(formData: FormData) {
   const supabase = await createClient();
   const { error } = await supabase.from("custom_field_definitions").insert({
     name: String(formData.get("name") ?? "").trim(),
-    label: String(formData.get("label") ?? "").trim(),
+    label: normalizeBanglaText(formData.get("label")) ?? "",
     entity_type: String(formData.get("entity_type") ?? "student"),
     field_type: String(formData.get("field_type") ?? "text"),
     options: emptyToNull(formData.get("options")),
@@ -753,7 +754,7 @@ export async function saveStudentCustomFieldsAction(studentId: string, formData:
     .map(([key, value]) => ({
       field_definition_id: key.replace("custom_", ""),
       entity_id: studentId,
-      value: String(value ?? "").trim()
+      value: normalizeBanglaText(value) ?? ""
     }));
 
   if (rows.length) {
@@ -769,7 +770,7 @@ export async function saveStudentCustomFieldsAction(studentId: string, formData:
 export async function addStudentNoteAction(studentId: string, formData: FormData) {
   const { user } = await requirePrincipal();
   const supabase = await createClient();
-  const note = String(formData.get("note") ?? "").trim();
+  const note = normalizeBanglaText(formData.get("note"));
 
   if (!note) return;
 

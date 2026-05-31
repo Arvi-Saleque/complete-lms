@@ -3,10 +3,11 @@ import { ConfirmForm } from "@/components/admin/confirm-form";
 import { Pagination } from "@/components/admin/pagination";
 import { PageHeader } from "@/components/admin/page-header";
 import { PendingButton } from "@/components/admin/pending-button";
+import { BanglaTextarea } from "@/components/ui/bangla-textarea";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input, Select, Textarea } from "@/components/ui/form";
+import { Input, Select } from "@/components/ui/form";
 import { Table, Td, Th } from "@/components/ui/table";
 import { addPaymentAction, deleteFeeRecordAction } from "@/lib/actions";
 import { getAdminTranslator } from "@/lib/i18n-server";
@@ -296,7 +297,7 @@ export default async function FeesPage({
                             type="number"
                           />
                           <Input name="payment_date" type="date" defaultValue={todayIso()} required />
-                          <Textarea className="col-span-2 min-h-16" name="note" placeholder={t("Note")} />
+                          <BanglaTextarea className="min-h-16" name="note" placeholder={t("Note")} wrapperClassName="col-span-2" />
                           <PendingButton className="col-span-2" pendingLabel={t("Saving...")} size="sm" type="submit">
                             {t("Add payment")}
                           </PendingButton>

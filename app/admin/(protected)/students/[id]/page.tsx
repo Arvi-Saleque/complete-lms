@@ -5,9 +5,12 @@ import { PageHeader } from "@/components/admin/page-header";
 import { PrintButton } from "@/components/admin/print-button";
 import { AccordionItem } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
+import { BanglaInputHelp } from "@/components/ui/bangla-field";
+import { BanglaInput } from "@/components/ui/bangla-input";
+import { BanglaTextarea } from "@/components/ui/bangla-textarea";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty";
-import { Input, Label, Select, Textarea } from "@/components/ui/form";
+import { Input, Label, Select } from "@/components/ui/form";
 import { Table, Td, Th } from "@/components/ui/table";
 import {
   addStudentNoteAction,
@@ -365,18 +368,20 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
                       <option value="false">{t("No")}</option>
                     </Select>
                   ) : (
-                    <Input
-                      id={`custom_${field.id}`}
-                      name={`custom_${field.id}`}
-                      type={
-                        field.field_type === "number"
-                          ? "number"
-                          : field.field_type === "date"
-                            ? "date"
-                            : "text"
-                      }
-                      defaultValue={customValueByField.get(field.id) ?? ""}
-                    />
+                    field.field_type === "text" ? (
+                      <BanglaInput
+                        id={`custom_${field.id}`}
+                        name={`custom_${field.id}`}
+                        defaultValue={customValueByField.get(field.id) ?? ""}
+                      />
+                    ) : (
+                      <Input
+                        id={`custom_${field.id}`}
+                        name={`custom_${field.id}`}
+                        type={field.field_type}
+                        defaultValue={customValueByField.get(field.id) ?? ""}
+                      />
+                    )
                   )}
                 </div>
               ))}
@@ -388,7 +393,8 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
         </AccordionItem>
         <AccordionItem title={t("Notes")}>
           <form action={addNote} className="mb-4 space-y-3">
-            <Textarea name="note" placeholder={t("Write a note about this student")} required />
+            <BanglaInputHelp />
+            <BanglaTextarea name="note" placeholder={t("Write a note about this student")} required />
             <Button type="submit">{t("Add note")}</Button>
           </form>
           {noteRows.length ? (

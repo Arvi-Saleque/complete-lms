@@ -1,8 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { BanglaInputHelp } from "@/components/ui/bangla-field";
+import { BanglaTextarea } from "@/components/ui/bangla-textarea";
 import { Button } from "@/components/ui/button";
-import { Input, Label, Select, Textarea } from "@/components/ui/form";
+import { Input, Label, Select } from "@/components/ui/form";
 import { translator, type AdminLanguage } from "@/lib/i18n";
 import { currentBangladeshYear } from "@/lib/utils";
 
@@ -42,6 +44,9 @@ export function FeeRecordForm({
 
   return (
     <form action={action} className="grid gap-4 md:grid-cols-2">
+      <div className="md:col-span-2">
+        <BanglaInputHelp />
+      </div>
       <div className="space-y-2">
         <Label htmlFor="student_id">{t("Student")}</Label>
         <Select id="student_id" name="student_id" required>
@@ -119,7 +124,7 @@ export function FeeRecordForm({
       </div>
       <div className="space-y-2 md:col-span-2">
         <Label htmlFor="note">{t("Note")}</Label>
-        <Textarea id="note" name="note" />
+        <BanglaTextarea id="note" name="note" />
       </div>
       <div className="md:col-span-2">
         <Button type="submit">{t("Create fee record")}</Button>

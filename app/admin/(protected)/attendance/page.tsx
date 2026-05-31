@@ -1,8 +1,9 @@
 import { AttendanceFilterForm } from "@/components/admin/attendance-filter-form";
 import { PageHeader } from "@/components/admin/page-header";
 import { PendingButton } from "@/components/admin/pending-button";
+import { BanglaInput } from "@/components/ui/bangla-input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input, Select } from "@/components/ui/form";
+import { Select } from "@/components/ui/form";
 import { Table, Td, Th } from "@/components/ui/table";
 import { saveAttendanceAction } from "@/lib/actions";
 import { getAdminLanguage, getAdminTranslator } from "@/lib/i18n-server";
@@ -119,7 +120,7 @@ export default async function AttendancePage({
                           </Select>
                         </Td>
                         <Td>
-                          <Input name={`note_${student.id}`} defaultValue={existing?.note ?? ""} />
+                          <BanglaInput name={`note_${student.id}`} defaultValue={existing?.note ?? ""} />
                         </Td>
                       </tr>
                     );

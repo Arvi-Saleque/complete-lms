@@ -1,6 +1,7 @@
 import { PageHeader } from "@/components/admin/page-header";
 import { PendingButton } from "@/components/admin/pending-button";
 import { Badge } from "@/components/ui/badge";
+import { BanglaInput } from "@/components/ui/bangla-input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty";
@@ -188,7 +189,7 @@ export default async function ResultsPage({
                         <Td>{existing ? total : "-"}</Td>
                         <Td>{existing ? autoGrade : t("After save")}</Td>
                         <Td>{existing ? <Badge value={status} /> : <Badge value="not entered" />}</Td>
-                        <Td><Input name={`note_${student.id}`} defaultValue={existing?.note ?? ""} /></Td>
+                        <Td><BanglaInput name={`note_${student.id}`} defaultValue={existing?.note ?? ""} /></Td>
                       </tr>
                     );
                   })}

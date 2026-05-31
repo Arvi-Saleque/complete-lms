@@ -1,10 +1,13 @@
 import { ConfirmForm } from "@/components/admin/confirm-form";
 import { PageHeader } from "@/components/admin/page-header";
 import { Badge } from "@/components/ui/badge";
+import { BanglaInputHelp } from "@/components/ui/bangla-field";
+import { BanglaInput } from "@/components/ui/bangla-input";
+import { BanglaTextarea } from "@/components/ui/bangla-textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty";
-import { Input, Label, Select, Textarea } from "@/components/ui/form";
+import { Input, Label, Select } from "@/components/ui/form";
 import { Table, Td, Th } from "@/components/ui/table";
 import { createFeeTypeAction, deleteFeeTypeAction } from "@/lib/actions";
 import { getAdminTranslator } from "@/lib/i18n-server";
@@ -33,9 +36,10 @@ export default async function FeeTypesPage() {
           </CardHeader>
           <CardContent>
             <form action={createFeeTypeAction} className="space-y-3">
+              <BanglaInputHelp />
               <div className="space-y-2">
                 <Label htmlFor="name">{t("Name")}</Label>
-                <Input id="name" name="name" required placeholder={t("Monthly Fee / Beton")} />
+                <BanglaInput id="name" name="name" required placeholder={t("Monthly Fee / Beton")} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="category">{t("Category")}</Label>
@@ -55,7 +59,7 @@ export default async function FeeTypesPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="description">{t("Description")}</Label>
-                <Textarea id="description" name="description" />
+                <BanglaTextarea id="description" name="description" />
               </div>
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" name="is_active" defaultChecked />

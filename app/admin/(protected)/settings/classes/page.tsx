@@ -1,6 +1,8 @@
 import { ConfirmForm } from "@/components/admin/confirm-form";
 import { PageHeader } from "@/components/admin/page-header";
 import { Badge } from "@/components/ui/badge";
+import { BanglaInputHelp } from "@/components/ui/bangla-field";
+import { BanglaInput } from "@/components/ui/bangla-input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label, Select } from "@/components/ui/form";
@@ -57,9 +59,10 @@ export default async function ClassesSettingsPage({
             </CardHeader>
             <CardContent>
               <form action={createClassAction} className="space-y-3">
+                <BanglaInputHelp />
                 <div className="space-y-2">
                   <Label htmlFor="name">{t("Class name")}</Label>
-                  <Input id="name" name="name" required placeholder={t("Class 1")} />
+                  <BanglaInput id="name" name="name" required placeholder={t("Class 1")} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="sort_order">{t("Sort order")}</Label>
@@ -93,7 +96,7 @@ export default async function ClassesSettingsPage({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="section_name">{t("Section name")}</Label>
-                  <Input id="section_name" name="name" required placeholder="A" />
+                  <BanglaInput id="section_name" name="name" required placeholder="A" />
                 </div>
                 <label className="flex items-center gap-2 text-sm">
                   <input name="is_active" type="checkbox" defaultChecked />
