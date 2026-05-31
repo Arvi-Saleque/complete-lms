@@ -722,7 +722,7 @@ export async function createCustomFieldAction(formData: FormData) {
     label: normalizeBanglaText(formData.get("label")) ?? "",
     entity_type: String(formData.get("entity_type") ?? "student"),
     field_type: String(formData.get("field_type") ?? "text"),
-    options: emptyToNull(formData.get("options")),
+    options: normalizeBanglaText(formData.get("options")),
     is_required: formData.get("is_required") === "on",
     is_active: formData.get("is_active") === "on"
   });

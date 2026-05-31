@@ -3,10 +3,11 @@ import { PageHeader } from "@/components/admin/page-header";
 import { Badge } from "@/components/ui/badge";
 import { BanglaInputHelp } from "@/components/ui/bangla-field";
 import { BanglaInput } from "@/components/ui/bangla-input";
+import { BanglaTextarea } from "@/components/ui/bangla-textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty";
-import { Input, Label, Select, Textarea } from "@/components/ui/form";
+import { Input, Label, Select } from "@/components/ui/form";
 import { Table, Td, Th } from "@/components/ui/table";
 import { createCustomFieldAction, deleteCustomFieldAction } from "@/lib/actions";
 import { getAdminTranslator } from "@/lib/i18n-server";
@@ -57,7 +58,7 @@ export default async function CustomFieldsPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="options">{t("Options")}</Label>
-                <Textarea id="options" name="options" placeholder={t("Only for dropdown fields")} />
+                <BanglaTextarea id="options" name="options" placeholder={t("Only for dropdown fields")} />
               </div>
               <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="is_required" /> {t("Required")}</label>
               <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="is_active" defaultChecked /> {t("Active")}</label>

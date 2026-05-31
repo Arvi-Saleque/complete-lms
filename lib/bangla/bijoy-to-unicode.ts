@@ -91,7 +91,6 @@ const ALL_SYMBOLS = {
   ...POST_SYMBOLS_MAP
 };
 
-const UNICODE_BANGLA_PATTERN = /[\u0980-\u09ff]/;
 const LEGACY_GLYPH_PATTERN =
   /[°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÎÏÐÑÒÓÔÕ×ØÙÚÛÜÝÞßàáâãäåçéêëìíîïðñòóôõö÷øùûüýÿþ®¯”˜™š›¤©úè‘’‹Œ—ÍœŸ¡¢£¥¦§¨ª«¬­æ“–ƒ‚„…†‡ˆ‰Š•]/;
 const ANSI_TOKEN_PATTERN =
@@ -175,7 +174,7 @@ function looksLikeBijoyToken(input: string) {
 }
 
 export function looksLikeBijoyText(input: string): boolean {
-  if (!input || typeof input !== "string" || UNICODE_BANGLA_PATTERN.test(input)) {
+  if (!input || typeof input !== "string") {
     return false;
   }
 
@@ -186,11 +185,17 @@ export function looksLikeBijoyText(input: string): boolean {
   return bijoyHintScore(input) >= 2;
 }
 
+function convertBijoyTokensOnly(input: string) {
+  return input.replace(ANSI_TOKEN_PATTERN, (token) =>
+    looksLikeBijoyToken(token) ? rawBijoyToUnicode(token) : token
+  );
+}
+
 export function convertBijoyToUnicode(
   input: string,
   options: ConversionOptions = {}
 ): string {
-  if (!input || typeof input !== "string" || UNICODE_BANGLA_PATTERN.test(input)) {
+  if (!input || typeof input !== "string") {
     return input ?? "";
   }
 
@@ -202,13 +207,11 @@ export function convertBijoyToUnicode(
     return input;
   }
 
-  return input.replace(ANSI_TOKEN_PATTERN, (token) =>
-    looksLikeBijoyToken(token) ? rawBijoyToUnicode(token) : token
-  );
+  return convertBijoyTokensOnly(input);
 }
 
 export function normalizeBanglaText(input: FormDataEntryValue | null): string | null {
   const trimmed = String(input ?? "").trim();
   if (!trimmed) return null;
-  return looksLikeBijoyText(trimmed) ? convertBijoyToUnicode(trimmed) : trimmed;
+  return looksLikeBijoyText(trimmed) ? convertBijoyTokensOnly(trimmed) : trimmed;
 }

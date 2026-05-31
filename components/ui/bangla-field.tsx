@@ -65,7 +65,7 @@ export function useBanglaField<Element extends HTMLInputElement | HTMLTextAreaEl
     if (!form) return;
 
     const handleSubmit = () => {
-      if (mode === "bijoy") convertCurrentValue(true);
+      if (mode === "bijoy") convertCurrentValue();
     };
 
     form.addEventListener("submit", handleSubmit, true);
@@ -81,7 +81,7 @@ export function useBanglaField<Element extends HTMLInputElement | HTMLTextAreaEl
     },
     fieldProps: {
       onBlur: (event: FocusEvent<Element>) => {
-        if (mode === "bijoy") convertCurrentValue(true);
+        if (mode === "bijoy") convertCurrentValue();
         onBlur?.(event);
       },
       onChange: (event: ChangeEvent<Element>) => {

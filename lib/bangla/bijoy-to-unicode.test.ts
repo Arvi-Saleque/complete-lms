@@ -32,8 +32,19 @@ describe("convertBijoyToUnicode", () => {
     assert.equal(convertBijoyToUnicode("Student: Avgvi evsjv"), "Student: আমার বাংলা");
   });
 
+  it("preserves Unicode Bangla while converting a BIJOY portion", () => {
+    assert.equal(convertBijoyToUnicode("নাম: Avgvi evsjv"), "নাম: আমার বাংলা");
+    assert.equal(looksLikeBijoyText("নাম: Avgvi evsjv"), true);
+  });
+
+  it("does not convert an ordinary English name unless force is explicit", () => {
+    assert.equal(convertBijoyToUnicode("Md Rahim"), "Md Rahim");
+    assert.notEqual(convertBijoyToUnicode("Md Rahim", { force: true }), "Md Rahim");
+  });
+
   it("only normalizes strongly detected BIJOY text on the server path", () => {
     assert.equal(looksLikeBijoyText("Student name"), false);
     assert.equal(normalizeBanglaText("  Avgvi evsjv  "), "আমার বাংলা");
+    assert.equal(normalizeBanglaText("  Md Rahim  "), "Md Rahim");
   });
 });
