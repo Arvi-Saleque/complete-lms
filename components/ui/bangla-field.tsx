@@ -14,7 +14,8 @@ import {
 import { useBanglaInputMode } from "@/lib/bangla/bangla-input-mode";
 import {
   applyBijoyKey,
-  convertBijoyPaste,
+  handleBijoyPaste,
+  resetBijoyKeyboardState,
   shouldApplyBijoyKey
 } from "@/lib/bangla/bijoy-keyboard";
 
@@ -82,18 +83,6 @@ export function useBanglaField<Element extends HTMLInputElement | HTMLTextAreaEl
     }
   }, []);
 
-  const insertText = useCallback(
-    (element: Element, text: string) => {
-      const selectionStart = element.selectionStart ?? element.value.length;
-      const selectionEnd = element.selectionEnd ?? selectionStart;
-      const nextValue =
-        element.value.slice(0, selectionStart) + text + element.value.slice(selectionEnd);
-
-      commitValue(element, nextValue, selectionStart + text.length);
-    },
-    [commitValue]
-  );
-
   return {
     fieldProps: {
       onBeforeInput: (event: ReactInputEvent<Element>) => {
@@ -120,6 +109,7 @@ export function useBanglaField<Element extends HTMLInputElement | HTMLTextAreaEl
         commitValue(element, next.value, next.caret);
       },
       onBlur: (event: FocusEvent<Element>) => {
+        resetBijoyKeyboardState();
         onBlur?.(event);
       },
       onChange: (event: ChangeEvent<Element>) => {
@@ -128,17 +118,19 @@ export function useBanglaField<Element extends HTMLInputElement | HTMLTextAreaEl
       },
       onKeyDown: (event: KeyboardEvent<Element>) => {
         onKeyDown?.(event);
-        if (
-          mode !== "bijoy" ||
-          !shouldApplyBijoyKey({
-            altKey: event.altKey,
-            ctrlKey: event.ctrlKey,
-            defaultPrevented: event.defaultPrevented,
-            isComposing: event.nativeEvent.isComposing,
-            key: event.key,
-            metaKey: event.metaKey
-          })
-        ) {
+        if (mode !== "bijoy") return;
+
+        const shouldApply = shouldApplyBijoyKey({
+          altKey: event.altKey,
+          ctrlKey: event.ctrlKey,
+          defaultPrevented: event.defaultPrevented,
+          isComposing: event.nativeEvent.isComposing,
+          key: event.key,
+          metaKey: event.metaKey
+        });
+
+        if (!shouldApply) {
+          resetBijoyKeyboardState();
           return;
         }
 
@@ -156,10 +148,19 @@ export function useBanglaField<Element extends HTMLInputElement | HTMLTextAreaEl
         if (event.defaultPrevented || mode !== "bijoy" || !detectBijoyPaste) return;
 
         const pastedText = event.clipboardData.getData("text");
-        const converted = convertBijoyPaste(pastedText);
-        if (converted !== pastedText) {
+        const selectionStart =
+          event.currentTarget.selectionStart ?? event.currentTarget.value.length;
+        const selectionEnd = event.currentTarget.selectionEnd ?? selectionStart;
+        const next = handleBijoyPaste(
+          event.currentTarget.value,
+          pastedText,
+          selectionStart,
+          selectionEnd
+        );
+
+        if (next.value !== event.currentTarget.value) {
           event.preventDefault();
-          insertText(event.currentTarget, converted);
+          commitValue(event.currentTarget, next.value, next.caret);
         }
       },
       ref: fieldRef as RefObject<Element>,
