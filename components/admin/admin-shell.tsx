@@ -13,6 +13,7 @@ import {
   UserRoundPlus,
   Users
 } from "lucide-react";
+import { BanglaInputModeToggle } from "@/components/admin/bangla-input-mode-toggle";
 import { LanguageToggle } from "@/components/admin/language-toggle";
 import { logoutAction } from "@/lib/actions";
 import { translator, type AdminLanguage } from "@/lib/i18n";
@@ -97,9 +98,12 @@ export function AdminShell({
             <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {t("Settings")}
             </p>
-            <Suspense fallback={null}>
-              <LanguageToggle language={language} />
-            </Suspense>
+            <BanglaInputModeToggle />
+            <div className="mt-2">
+              <Suspense fallback={null}>
+                <LanguageToggle language={language} />
+              </Suspense>
+            </div>
           </div>
         </nav>
       </aside>
@@ -131,9 +135,12 @@ export function AdminShell({
               </Link>
             ))}
             <div className="min-w-48 shrink-0">
-              <Suspense fallback={null}>
-                <LanguageToggle language={language} />
-              </Suspense>
+              <BanglaInputModeToggle />
+              <div className="mt-2">
+                <Suspense fallback={null}>
+                  <LanguageToggle language={language} />
+                </Suspense>
+              </div>
             </div>
           </nav>
         </header>

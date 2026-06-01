@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "tsx --test lib/bangla/bijoy-to-unicode.test.ts"
+    "test": "tsx --test lib/bangla/bijoy-to-unicode.test.ts lib/bangla/bangla-input-mode.test.ts lib/bangla/bijoy-keyboard.test.ts"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.1.0",

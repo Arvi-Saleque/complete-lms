@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { BanglaFieldControls, useBanglaField } from "@/components/ui/bangla-field";
+import { useBanglaField } from "@/components/ui/bangla-field";
 import { cn } from "@/lib/utils";
 
 export interface BanglaTextareaProps
@@ -17,21 +17,27 @@ export const BanglaTextarea = React.forwardRef<HTMLTextAreaElement, BanglaTextar
       className,
       defaultValue,
       detectBijoyPaste,
+      onBeforeInput,
       onBlur,
       onChange,
+      onKeyDown,
       onPaste,
-      showBijoyControls = true,
+      showBijoyControls: _showBijoyControls,
       value,
       wrapperClassName,
       ...props
     },
     forwardedRef
   ) => {
-    const { controls, fieldProps } = useBanglaField<HTMLTextAreaElement>({
+    void _showBijoyControls;
+
+    const { fieldProps } = useBanglaField<HTMLTextAreaElement>({
       defaultValue,
       detectBijoyPaste,
+      onBeforeInput,
       onBlur,
       onChange,
+      onKeyDown,
       onPaste,
       value
     });
@@ -48,7 +54,6 @@ export const BanglaTextarea = React.forwardRef<HTMLTextAreaElement, BanglaTextar
           {...props}
           {...fieldProps}
         />
-        {showBijoyControls ? <BanglaFieldControls {...controls} /> : null}
       </div>
     );
   }

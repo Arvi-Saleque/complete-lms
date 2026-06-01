@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { BanglaFieldControls, useBanglaField } from "@/components/ui/bangla-field";
+import { useBanglaField } from "@/components/ui/bangla-field";
 import { cn } from "@/lib/utils";
 
 export interface BanglaInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -16,21 +16,27 @@ export const BanglaInput = React.forwardRef<HTMLInputElement, BanglaInputProps>(
       className,
       defaultValue,
       detectBijoyPaste,
+      onBeforeInput,
       onBlur,
       onChange,
+      onKeyDown,
       onPaste,
-      showBijoyControls = true,
+      showBijoyControls: _showBijoyControls,
       value,
       wrapperClassName,
       ...props
     },
     forwardedRef
   ) => {
-    const { controls, fieldProps } = useBanglaField<HTMLInputElement>({
+    void _showBijoyControls;
+
+    const { fieldProps } = useBanglaField<HTMLInputElement>({
       defaultValue,
       detectBijoyPaste,
+      onBeforeInput,
       onBlur,
       onChange,
+      onKeyDown,
       onPaste,
       value
     });
@@ -47,7 +53,6 @@ export const BanglaInput = React.forwardRef<HTMLInputElement, BanglaInputProps>(
           {...props}
           {...fieldProps}
         />
-        {showBijoyControls ? <BanglaFieldControls {...controls} /> : null}
       </div>
     );
   }
