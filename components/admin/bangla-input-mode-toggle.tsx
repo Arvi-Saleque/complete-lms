@@ -8,7 +8,7 @@ import {
 } from "@/lib/bangla/bangla-input-mode";
 
 function modeLabel(mode: BanglaInputMode) {
-  return mode === "unicode" ? "Unicode" : "BIJOY";
+  return mode === "unicode" ? "Unicode" : "BIJOY Paste Only";
 }
 
 export function BanglaInputModeToggle() {

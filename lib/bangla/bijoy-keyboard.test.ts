@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { convertBijoyToUnicode } from "./bijoy-to-unicode";
 import {
   applyBijoyKey,
   convertBijoyPaste,
@@ -8,12 +9,137 @@ import {
   shouldApplyBijoyKey
 } from "./bijoy-keyboard";
 
+const exactCases: Array<[string, string]> = [
+  ["Avgvi", "আমার"],
+  ["evsjv", "বাংলা"],
+  ["Avwg", "আমি"],
+  ["†Zvgvi", "তোমার"],
+  ["wkÿK", "শিক্ষক"],
+  ["QvKv", "ঢাকা"],
+  ["K¬vm", "ক্লাস"],
+  ["†kÖwY", "শ্রেণি"],
+  ["wcZv", "পিতা"],
+  ["gvZv", "মাতা"],
+  ["bvg", "নাম"],
+  ["wVKvbv", "ঠিকানা"],
+  ["fwZ©", "ভর্তি"],
+  ["wk¶v_©x", "শিক্ষার্থী"],
+  ["Aa¨vq", "অধ্যায়"],
+  ["cix¶v", "পরীক্ষা"],
+  ["djvdj", "ফলাফল"],
+  ["Dcw¯’wZ", "উপস্থিতি"],
+  ["Abycw¯’wZ", "অনুপস্থিতি"],
+  ["†kÖwYwk¶K", "শ্রেণিশিক্ষক"],
+  ["cÖavb wk¶K", "প্রধান শিক্ষক"],
+  ["mnKvix wk¶K", "সহকারী শিক্ষক"],
+  ["wcZvi bvg", "পিতার নাম"],
+  ["gvZvi bvg", "মাতার নাম"],
+  ["AwffveK", "অভিভাবক"],
+  ["Rb¥ ZvwiL", "জন্ম তারিখ"],
+  ["†gvevBj b¤^i", "মোবাইল নম্বর"],
+  ["¯’vqx wVKvbv", "স্থায়ী ঠিকানা"],
+  ["eZ©gvb wVKvbv", "বর্তমান ঠিকানা"],
+  ["ms¯‹…Z", "সংস্কৃত"],
+  ["cÖK…wZ", "প্রকৃতি"],
+  ["m„wó", "সৃষ্টি"],
+  ["K…wl", "কৃষি"],
+  ["g„Zz¨", "মৃত্যু"],
+  ["m¤úK©", "সম্পর্ক"],
+  ["cÖwZôvb", "প্রতিষ্ঠান"],
+  ["cÖ_g", "প্রথম"],
+  ["wØZxq", "দ্বিতীয়"],
+  ["Z…Zxq", "তৃতীয়"],
+  ["PZz_©", "চতুর্থ"],
+  ["cÂg", "পঞ্চম"],
+  ["lô", "ষষ্ঠ"],
+  ["mßg", "সপ্তম"],
+  ["Aóg", "অষ্টম"],
+  ["beg", "নবম"],
+  ["`kg", "দশম"],
+  ["gv`ªvmv", "মাদ্রাসা"],
+  ["Bmjvg", "ইসলাম"],
+  ["KziAvb", "কুরআন"],
+  ["nvwdR", "হাফিজ"],
+  ["Avwjg", "আলিম"],
+  ["`vwLj", "দাখিল"],
+  ["nvw`m", "হাদিস"],
+  ["wZjvIqvZ", "তিলাওয়াত"],
+  ["ZvRwe`", "তাজবিদ"],
+  [
+    "Avgvi evsjv wkÿK QvKv †kÖwY wVKvbv",
+    "আমার বাংলা শিক্ষক ঢাকা শ্রেণি ঠিকানা"
+  ]
+];
+
+const bijoyCorpus = [
+  "Avgvi",
+  "evsjv",
+  "Avwg",
+  "†Zvgvi",
+  "wkÿK",
+  "QvKv",
+  "†kÖwY",
+  "wVKvbv",
+  "fwZ©",
+  "wk¶v_©x",
+  "Aa¨vq",
+  "cix¶v",
+  "djvdj",
+  "Dcw¯’wZ",
+  "Abycw¯’wZ",
+  "cÖavb wk¶K",
+  "mnKvix wk¶K",
+  "wcZvi bvg",
+  "gvZvi bvg",
+  "AwffveK",
+  "Rb¥ ZvwiL",
+  "†gvevBj b¤^i",
+  "¯’vqx wVKvbv",
+  "eZ©gvb wVKvbv",
+  "ms¯‹…Z",
+  "cÖK…wZ",
+  "m„wó",
+  "K…wl",
+  "g„Zz¨",
+  "m¤úK©",
+  "cÖwZôvb",
+  "cÖ_g",
+  "wØZxq",
+  "Z…Zxq",
+  "PZz_©",
+  "cÂg",
+  "lô",
+  "mßg",
+  "Aóg",
+  "beg",
+  "`kg",
+  "gv`ªvmv",
+  "Bmjvg",
+  "KziAvb",
+  "nvwdR",
+  "Avwjg",
+  "`vwLj",
+  "nvw`m",
+  "wZjvIqvZ",
+  "ZvRwe`",
+  "Avgvi evsjv wkÿK QvKv †kÖwY wVKvbv"
+];
+
+const formCases: Array<[string, string]> = [
+  ["bvg: Avgvi", "নাম: আমার"],
+  ["wcZvi bvg: †gvnv¤§` Avjx", "পিতার নাম: মোহাম্মদ আলী"],
+  ["gvZvi bvg: dv‡Zgv LvZzb", "মাতার নাম: ফাতেমা খাতুন"],
+  ["wVKvbv: QvKv evsjv‡`k", "ঠিকানা: ঢাকা বাংলাদেশ"],
+  ["†kÖwY: cÂg", "শ্রেণি: পঞ্চম"],
+  ["†gvevBj: 01700000000", "মোবাইল: 01700000000"]
+];
+
 function typeBijoy(sequence: string, initialValue = "") {
   resetBijoyKeyboardState();
   let value = initialValue;
   let caret = value.length;
 
-  for (const key of sequence) {
+  for (const key of Array.from(sequence)) {
     const next = applyBijoyKey(value, key, caret, caret);
     assert.ok(next, `Expected ${JSON.stringify(key)} to be handled`);
     value = next.value;
@@ -23,95 +149,133 @@ function typeBijoy(sequence: string, initialValue = "") {
   return value;
 }
 
-describe("bijoy keyboard", () => {
-  it("passes the required live BIJOY acceptance sequences", () => {
-    const acceptanceCases = [
-      ["Avgvi", "\u0986\u09ae\u09be\u09b0"],
-      ["evsjv", "\u09ac\u09be\u0982\u09b2\u09be"],
-      ["Avwg", "\u0986\u09ae\u09bf"],
-      ["\u2020Zvgvi", "\u09a4\u09cb\u09ae\u09be\u09b0"],
-      ["wk\u00ffK", "\u09b6\u09bf\u0995\u09cd\u09b7\u0995"],
-      ["QvKv", "\u09a2\u09be\u0995\u09be"],
-      ["K\u00acvm", "\u0995\u09cd\u09b2\u09be\u09b8"],
-      ["\u2020k\u00d6wY", "\u09b6\u09cd\u09b0\u09c7\u09a3\u09bf"],
-      ["wcZv", "\u09aa\u09bf\u09a4\u09be"],
-      ["gvZv", "\u09ae\u09be\u09a4\u09be"],
-      ["bvg", "\u09a8\u09be\u09ae"],
-      ["wVKvbv", "\u09a0\u09bf\u0995\u09be\u09a8\u09be"]
-    ] as const;
+function typeBijoySequence(sequence: string): string {
+  resetBijoyKeyboardState();
+  let value = "";
+  let caret = 0;
 
-    for (const [sequence, expected] of acceptanceCases) {
-      assert.equal(typeBijoy(sequence), expected, sequence);
+  for (const key of Array.from(sequence)) {
+    const result = applyBijoyKey(value, key, caret, caret);
+    if (result) {
+      value = result.value;
+      caret = result.caret;
+    } else {
+      value = value.slice(0, caret) + key + value.slice(caret);
+      caret += key.length;
+    }
+  }
+
+  return value;
+}
+
+describe("bijoy keyboard", () => {
+  it("passes exact live BIJOY cases", () => {
+    for (const [raw, expected] of exactCases) {
+      assert.equal(typeBijoySequence(raw), expected, raw);
     }
   });
 
+  it("matches paste converter for the BIJOY corpus", () => {
+    for (const raw of bijoyCorpus) {
+      assert.equal(typeBijoySequence(raw), convertBijoyToUnicode(raw, { force: true }), raw);
+    }
+  });
+
+  it("handles form-like BIJOY strings", () => {
+    for (const [raw, expected] of formCases) {
+      assert.equal(typeBijoySequence(raw), expected, raw);
+    }
+  });
+
+  it("does not leave raw BIJOY fragments after mixed hard typing", () => {
+    const output = typeBijoySequence("Avgvi evsjv wkÿK QvKv †kÖwY wVKvbv");
+
+    assert.equal(output, "আমার বাংলা শিক্ষক ঢাকা শ্রেণি ঠিকানা");
+    assert.equal(output.includes("QvKv"), false);
+    assert.equal(output.includes("†kÖwY"), false);
+    assert.equal(output.includes("wVKvbv"), false);
+    assert.equal(output.includes("†"), false);
+    assert.equal(output.includes("ÿ"), false);
+  });
+
   it("maps basic consonants", () => {
-    assert.equal(typeBijoy("KLMNO"), "\u0995\u0996\u0997\u0998\u0999");
-    assert.equal(typeBijoy("Z_`ab"), "\u09a4\u09a5\u09a6\u09a7\u09a8");
+    assert.equal(typeBijoy("KLMNO"), "কখগঘঙ");
+    assert.equal(typeBijoy("Z_`ab"), "তথদধন");
   });
 
   it("maps basic independent vowels", () => {
-    assert.equal(
-      typeBijoy("ABCDEFGHIJ"),
-      "\u0985\u0987\u0988\u0989\u098a\u098b\u098f\u0990\u0993\u0994"
-    );
-    assert.equal(typeBijoy("Av"), "\u0986");
+    assert.equal(typeBijoy("ABCDEFGHIJ"), "অইঈউঊঋএঐওঔ");
+    assert.equal(typeBijoy("Av"), "আ");
   });
 
   it("applies post-base kar signs after consonants", () => {
-    assert.equal(typeBijoy("Kv"), "\u0995\u09be");
-    assert.equal(typeBijoy("Kx"), "\u0995\u09c0");
-    assert.equal(typeBijoy("Ky"), "\u0995\u09c1");
-    assert.equal(typeBijoy("K~"), "\u0995\u09c2");
+    assert.equal(typeBijoy("Kv"), "কা");
+    assert.equal(typeBijoy("Kx"), "কী");
+    assert.equal(typeBijoy("Ky"), "কু");
+    assert.equal(typeBijoy("K~"), "কূ");
   });
 
   it("holds pre-base kar signs and places them after the typed consonant", () => {
-    assert.equal(typeBijoy("wK"), "\u0995\u09bf");
-    assert.equal(typeBijoy("\u2020K"), "\u0995\u09c7");
-    assert.equal(typeBijoy("\u2021Kv"), "\u0995\u09cb");
-    assert.equal(typeBijoy("\u02c6K"), "\u0995\u09c8");
-    assert.equal(typeBijoy("\u2021K\u0160"), "\u0995\u09cc");
+    assert.equal(typeBijoy("wK"), "কি");
+    assert.equal(typeBijoy("†K"), "কে");
+    assert.equal(typeBijoy("‡Kv"), "কো");
+    assert.equal(typeBijoy("ˆK"), "কৈ");
+    assert.equal(typeBijoy("‡KŠ"), "কৌ");
   });
 
   it("supports hasanta and common conjunct composition", () => {
-    assert.equal(typeBijoy("K&K"), "\u0995\u09cd\u0995");
-    assert.equal(typeBijoy("K&l"), "\u0995\u09cd\u09b7");
-    assert.equal(typeBijoy("R&T"), "\u099c\u09cd\u099e");
-    assert.equal(typeBijoy("wk\u00ffK"), "\u09b6\u09bf\u0995\u09cd\u09b7\u0995");
+    assert.equal(typeBijoy("K&K"), "ক্ক");
+    assert.equal(typeBijoy("K&l"), "ক্ষ");
+    assert.equal(typeBijoy("R&T"), "জ্ঞ");
+    assert.equal(typeBijoy("wkÿK"), "শিক্ষক");
   });
 
   it("supports reph and ra-phala", () => {
-    assert.equal(typeBijoy("\u00a9K"), "\u09b0\u09cd\u0995");
-    assert.equal(typeBijoy("K\u00a9"), "\u09b0\u09cd\u0995");
-    assert.equal(typeBijoy("K\u00aa"), "\u0995\u09cd\u09b0");
-    assert.equal(typeBijoy("M\u00d6vg"), "\u0997\u09cd\u09b0\u09be\u09ae");
-    assert.equal(typeBijoy("\u2020k\u00d6wY"), "\u09b6\u09cd\u09b0\u09c7\u09a3\u09bf");
+    assert.equal(typeBijoy("©K"), "র্ক");
+    assert.equal(typeBijoy("K©"), "র্ক");
+    assert.equal(typeBijoy("Kª"), "ক্র");
+    assert.equal(typeBijoy("MÖvg"), "গ্রাম");
+    assert.equal(typeBijoy("†kÖwY"), "শ্রেণি");
   });
 
   it("supports ya-phala", () => {
-    assert.equal(typeBijoy("K\u00a8v"), "\u0995\u09cd\u09af\u09be");
-    assert.equal(typeBijoy("e\u00a8v"), "\u09ac\u09cd\u09af\u09be");
+    assert.equal(typeBijoy("K¨v"), "ক্যা");
+    assert.equal(typeBijoy("e¨v"), "ব্যা");
   });
 
   it("preserves punctuation, spaces, newlines, and unmapped numbers", () => {
-    assert.equal(
-      typeBijoy("Avgvi evsjv|"),
-      "\u0986\u09ae\u09be\u09b0 \u09ac\u09be\u0982\u09b2\u09be\u0964"
-    );
-    assert.equal(typeBijoy("K1\nL2"), "\u09951\n\u09962");
+    assert.equal(typeBijoy("Avgvi evsjv|"), "আমার বাংলা।");
+    assert.equal(typeBijoy("K1\nL2"), "ক1\nখ2");
   });
 
   it("replaces selected text without converting the whole field", () => {
     resetBijoyKeyboardState();
     assert.deepEqual(applyBijoyKey("Student name", "K", 8, 12), {
       caret: 9,
-      value: "Student \u0995"
+      value: "Student ক"
     });
+  });
+
+  it("replaces selected Bangla text in BIJOY mode", () => {
+    resetBijoyKeyboardState();
+    const initial = "পুরাতন";
+    const result = applyBijoyKey(initial, "A", 0, initial.length);
+
+    assert.equal(result?.value, "অ");
+    assert.equal(result?.caret, "অ".length);
+  });
+
+  it("keeps spaces and starts a new raw token after space", () => {
+    assert.equal(typeBijoySequence("Avgvi evsjv"), "আমার বাংলা");
+  });
+
+  it("keeps numbers unchanged inside form text", () => {
+    assert.equal(typeBijoySequence("†ivj 123"), "রোল 123");
   });
 
   it("keeps navigation, editing, and shortcut keys out of the keyboard engine", () => {
     for (const key of ["Backspace", "Delete", "ArrowLeft", "Tab", "Enter"]) {
-      assert.equal(applyBijoyKey("\u0986\u09ae\u09be\u09b0", key, 4, 4), null);
+      assert.equal(applyBijoyKey("আমার", key, 4, 4), null);
       assert.equal(shouldApplyBijoyKey({ key }), false);
     }
 
@@ -121,18 +285,15 @@ describe("bijoy keyboard", () => {
   });
 
   it("converts pasted BIJOY text to Unicode", () => {
-    assert.equal(
-      convertBijoyPaste("Avgvi evsjv"),
-      "\u0986\u09ae\u09be\u09b0 \u09ac\u09be\u0982\u09b2\u09be"
-    );
+    assert.equal(convertBijoyPaste("Avgvi evsjv"), "আমার বাংলা");
     assert.deepEqual(handleBijoyPaste("Name: ", "Avgvi", 6, 6), {
       caret: 10,
-      value: "Name: \u0986\u09ae\u09be\u09b0"
+      value: "Name: আমার"
     });
   });
 
   it("keeps pasted Unicode Bangla unchanged", () => {
-    const unicode = "\u0986\u09ae\u09bf \u09ac\u09be\u0982\u09b2\u09be";
+    const unicode = "আমি বাংলা";
 
     assert.equal(convertBijoyPaste(unicode), unicode);
     assert.deepEqual(handleBijoyPaste("", unicode, 0, 0), {
@@ -150,10 +311,10 @@ describe("bijoy keyboard", () => {
   });
 
   it("handles practical office examples", () => {
-    assert.equal(typeBijoy("ivwng"), "\u09b0\u09be\u09b9\u09bf\u09ae");
-    assert.equal(typeBijoy("gvnv"), "\u09ae\u09be\u09b9\u09be");
-    assert.equal(typeBijoy("evwo"), "\u09ac\u09be\u09dc\u09bf");
-    assert.equal(typeBijoy("K\u00acvm"), "\u0995\u09cd\u09b2\u09be\u09b8");
-    assert.equal(typeBijoy("A"), "\u0985");
+    assert.equal(typeBijoy("ivwng"), "রাহিম");
+    assert.equal(typeBijoy("gvnv"), "মাহা");
+    assert.equal(typeBijoy("evwo"), "বাড়ি");
+    assert.equal(typeBijoy("K¬vm"), "ক্লাস");
+    assert.equal(typeBijoy("A"), "অ");
   });
 });
