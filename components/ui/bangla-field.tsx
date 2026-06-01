@@ -192,10 +192,8 @@ export function useBanglaField<Element extends HTMLInputElement | HTMLTextAreaEl
           selectionEnd
         );
 
-        if (next.value !== event.currentTarget.value) {
-          event.preventDefault();
-          commitValue(event.currentTarget, next.value, next.caret);
-        }
+        event.preventDefault();
+        commitValue(event.currentTarget, next.value, next.caret);
       },
       ref: fieldRef as RefObject<Element>,
       value: currentFieldValue

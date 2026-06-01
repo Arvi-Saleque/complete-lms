@@ -292,6 +292,45 @@ describe("bijoy keyboard", () => {
     });
   });
 
+  it("force-converts hard BIJOY paste fragments in BIJOY mode", () => {
+    const pasted = "Avgvi evsjv wkÿK QvKv †kÖwY wVKvbv";
+    const expected = "আমার বাংলা শিক্ষক ঢাকা শ্রেণি ঠিকানা";
+
+    assert.equal(convertBijoyPaste(pasted), expected);
+    assert.deepEqual(handleBijoyPaste("", pasted, 0, 0), {
+      caret: expected.length,
+      value: expected
+    });
+  });
+
+  it("force-converts multiline BIJOY form paste", () => {
+    const pasted = [
+      "wcZvi bvg: †gvnv¤§` Avjx",
+      "gvZvi bvg: dv‡Zgv LvZzb",
+      "wVKvbv: QvKv evsjv‡`k"
+    ].join("\n");
+    const expected = [
+      "পিতার নাম: মোহাম্মদ আলী",
+      "মাতার নাম: ফাতেমা খাতুন",
+      "ঠিকানা: ঢাকা বাংলাদেশ"
+    ].join("\n");
+
+    assert.deepEqual(handleBijoyPaste("", pasted, 0, 0), {
+      caret: expected.length,
+      value: expected
+    });
+  });
+
+  it("does not leave raw BIJOY fragments after paste conversion", () => {
+    const output = convertBijoyPaste(
+      "wcZvi bvg: †gvnv¤§` Avjx\ngvZvi bvg: dv‡Zgv LvZzb\nwVKvbv: QvKv evsjv‡`k"
+    );
+
+    for (const fragment of ["QvKv", "wVKvbv", "wcZvi", "gvZvi", "†", "ÿ"]) {
+      assert.equal(output.includes(fragment), false, fragment);
+    }
+  });
+
   it("keeps pasted Unicode Bangla unchanged", () => {
     const unicode = "আমি বাংলা";
 
@@ -304,9 +343,19 @@ describe("bijoy keyboard", () => {
 
   it("does not damage pasted English text", () => {
     assert.equal(convertBijoyPaste("Student name and address"), "Student name and address");
+    assert.equal(convertBijoyPaste("Md Rahim 123"), "Md Rahim 123");
     assert.deepEqual(handleBijoyPaste("Note: ", "Room 2", 6, 6), {
       caret: 12,
       value: "Note: Room 2"
+    });
+  });
+
+  it("replaces selected text with converted BIJOY paste", () => {
+    const initial = "নাম: ___";
+
+    assert.deepEqual(handleBijoyPaste(initial, "Avgvi", 5, 8), {
+      caret: "নাম: আমার".length,
+      value: "নাম: আমার"
     });
   });
 
