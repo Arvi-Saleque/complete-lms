@@ -29,13 +29,15 @@ const liveBijoyOverrides: Record<string, string> = {
   Q: "X"
 };
 const banglaPattern = /[\u0980-\u09ff]/;
+const pasteTokenPattern = /[^\s,;:()[\]{}]+/g;
 const asciiBijoyPasteHints = [
   /Av/,
-  /[A-Z][vxy~]/,
+  /[A-Za-z]v/,
+  /[A-Z][xy~]/,
   /w[A-ZKLVPRTZa-z]/,
   /[A-Za-z][©¶ÿÖ¯’¤ÂÃ]/,
   /[†‡Öÿ¶¯’¤]/,
-  /\b(?:wcZvi|gvZvi|wVKvbv|LvZzb|Avjx|QvKv|bvg)\b/
+  /\b(?:wcZvi|gvZvi|wVKvbv|LvZzb|Avjx|QvKv|bvg|evsjv)\b/
 ];
 
 let defaultTokenState: BijoyTokenState | null = null;
@@ -72,9 +74,9 @@ function isTokenBoundary(key: string) {
   return tokenBoundaryPattern.test(key);
 }
 
-function shouldConvertBijoyPaste(text: string) {
-  if (!text || banglaPattern.test(text)) return false;
-  return looksLikeBijoyText(text) || asciiBijoyPasteHints.some((pattern) => pattern.test(text));
+function shouldConvertBijoyPasteToken(token: string) {
+  if (!token || banglaPattern.test(token)) return false;
+  return looksLikeBijoyText(token) || asciiBijoyPasteHints.some((pattern) => pattern.test(token));
 }
 
 function isStateUsable(
@@ -163,12 +165,14 @@ export function handleBijoyPaste(
   selectionStart: number,
   selectionEnd: number
 ) {
-  const converted = shouldConvertBijoyPaste(pastedText)
-    ? convertLiveBijoyToken(pastedText)
-    : pastedText;
+  const converted = convertBijoyPaste(pastedText);
   return replaceRange(inputValue, selectionStart, selectionEnd, converted);
 }
 
 export function convertBijoyPaste(text: string) {
-  return handleBijoyPaste("", text, 0, 0).value;
+  if (!text) return "";
+
+  return text.replace(pasteTokenPattern, (token) =>
+    shouldConvertBijoyPasteToken(token) ? convertLiveBijoyToken(token) : token
+  );
 }

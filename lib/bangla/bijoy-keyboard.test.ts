@@ -303,6 +303,27 @@ describe("bijoy keyboard", () => {
     });
   });
 
+  it("converts mixed Unicode Bangla and BIJOY paste fragments", () => {
+    assert.equal(
+      convertBijoyPaste("নাম: Avgvi evsjv QvKv wVKvbv"),
+      "নাম: আমার বাংলা ঢাকা ঠিকানা"
+    );
+  });
+
+  it("repairs partially converted BIJOY paste output", () => {
+    assert.equal(
+      convertBijoyPaste("আমার বাংলা শিক্ষক QvKv †kÖwY wVKvbv"),
+      "আমার বাংলা শিক্ষক ঢাকা শ্রেণি ঠিকানা"
+    );
+  });
+
+  it("preserves English labels while converting BIJOY paste values", () => {
+    assert.equal(
+      convertBijoyPaste("Student: Avgvi, Address: QvKv"),
+      "Student: আমার, Address: ঢাকা"
+    );
+  });
+
   it("force-converts multiline BIJOY form paste", () => {
     const pasted = [
       "wcZvi bvg: †gvnv¤§` Avjx",
@@ -344,6 +365,14 @@ describe("bijoy keyboard", () => {
   it("does not damage pasted English text", () => {
     assert.equal(convertBijoyPaste("Student name and address"), "Student name and address");
     assert.equal(convertBijoyPaste("Md Rahim 123"), "Md Rahim 123");
+    assert.equal(
+      convertBijoyPaste("Student name: Md Rahim, Roll: 123"),
+      "Student name: Md Rahim, Roll: 123"
+    );
+    assert.equal(
+      convertBijoyPaste("Phone: 01700000000, Date: 01/02/2026"),
+      "Phone: 01700000000, Date: 01/02/2026"
+    );
     assert.deepEqual(handleBijoyPaste("Note: ", "Room 2", 6, 6), {
       caret: 12,
       value: "Note: Room 2"
