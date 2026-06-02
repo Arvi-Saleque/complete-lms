@@ -11,6 +11,16 @@ function studentFormError(t: (text: string) => string, code?: string) {
   if (code === "roll-exists") {
     return t("Roll number already exists for this class, section, and session.");
   }
+  if (code === "name-required") return t("Student name is required (English or Bangla).");
+  if (code === "invalid-dob") return t("Invalid Date of Birth.");
+  if (code === "invalid-admission-date") return t("Invalid Admission Date.");
+  if (code === "invalid-class-start-date") return t("Invalid Class Start Date.");
+  if (code === "invalid-age-year") return t("Age year must be between 0 and 120.");
+  if (code === "invalid-age-month") return t("Age month must be between 0 and 12.");
+  if (code === "invalid-age-day") return t("Age day must be between 0 and 31.");
+  if (code === "invalid-gender") return t("Invalid gender selected.");
+  if (code === "invalid-residential-type") return t("Invalid residential type selected.");
+  if (code === "invalid-status") return t("Invalid status selected.");
   return undefined;
 }
 
