@@ -27,6 +27,7 @@ import {
 import { getAdminLanguage, getAdminTranslator } from "@/lib/i18n-server";
 import { createClient } from "@/lib/supabase/server";
 import { currency } from "@/lib/utils";
+import { genderOptions, residentialTypeOptions } from "@/lib/students/constants";
 
 export default async function StudentDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
@@ -157,15 +158,109 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
       />
       <div className="space-y-3">
         <AccordionItem title={t("Basic Information")} defaultOpen>
-          <dl className="grid gap-3 text-sm md:grid-cols-3">
-            <div><dt className="text-muted-foreground">{t("Class")}</dt><dd>{studentRow.classes?.name ?? "-"}</dd></div>
-            <div><dt className="text-muted-foreground">{t("Section")}</dt><dd>{studentRow.sections?.name ?? "-"}</dd></div>
-            <div><dt className="text-muted-foreground">{t("Status")}</dt><dd><Badge value={studentRow.status} /></dd></div>
-            <div><dt className="text-muted-foreground">{t("Father")}</dt><dd>{studentRow.father_name ?? "-"}</dd></div>
-            <div><dt className="text-muted-foreground">{t("Mother")}</dt><dd>{studentRow.mother_name ?? "-"}</dd></div>
-            <div><dt className="text-muted-foreground">{t("Phone")}</dt><dd>{studentRow.guardian_phone ?? "-"}</dd></div>
-            <div className="md:col-span-3"><dt className="text-muted-foreground">{t("Address")}</dt><dd>{studentRow.address ?? "-"}</dd></div>
-          </dl>
+          <div className="space-y-6">
+            {/* 1. সংক্ষিপ্ত তথ্য */}
+            <div className="rounded-md border p-4">
+              <h3 className="mb-3 font-semibold text-lg">১. সংক্ষিপ্ত তথ্য</h3>
+              <dl className="grid gap-3 text-sm md:grid-cols-3">
+                <div><dt className="text-muted-foreground">নাম</dt><dd>{studentRow.name || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">রোল</dt><dd>{studentRow.roll || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">ক্লাস</dt><dd>{studentRow.classes?.name || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">শাখা</dt><dd>{studentRow.sections?.name || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">সেশন / বছর</dt><dd>{studentRow.session_year || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">স্ট্যাটাস</dt><dd><Badge value={studentRow.status} /></dd></div>
+                <div><dt className="text-muted-foreground">অভিভাবকের ফোন</dt><dd>{studentRow.guardian_phone || "—"}</dd></div>
+                <div className="md:col-span-2"><dt className="text-muted-foreground">ঠিকানা</dt><dd>{studentRow.address || "—"}</dd></div>
+              </dl>
+            </div>
+
+            {/* 2. ভর্তি / একাডেমিক তথ্য */}
+            <div className="rounded-md border p-4">
+              <h3 className="mb-3 font-semibold text-lg">২. ভর্তি / একাডেমিক তথ্য</h3>
+              <dl className="grid gap-3 text-sm md:grid-cols-3">
+                <div><dt className="text-muted-foreground">ট্র্যাকিং নম্বর</dt><dd>{studentRow.tracking_no || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">ভর্তির তারিখ</dt><dd>{studentRow.admission_date || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">ক্লাস শুরুর তারিখ</dt><dd>{studentRow.class_start_date || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">আবাসিক ধরন</dt><dd>{residentialTypeOptions.find((o) => o.value === studentRow.residential_type)?.label || "—"}</dd></div>
+              </dl>
+            </div>
+
+            {/* 3. শিক্ষার্থীর তথ্য */}
+            <div className="rounded-md border p-4">
+              <h3 className="mb-3 font-semibold text-lg">৩. শিক্ষার্থীর তথ্য</h3>
+              <dl className="grid gap-3 text-sm md:grid-cols-3">
+                <div><dt className="text-muted-foreground">শিক্ষার্থীর নাম বাংলা</dt><dd>{studentRow.student_name_bn || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">শিক্ষার্থীর নাম ইংরেজি</dt><dd>{studentRow.student_name_en || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">জন্ম নিবন্ধন নম্বর</dt><dd>{studentRow.birth_certificate_no || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">জন্ম তারিখ</dt><dd>{studentRow.date_of_birth || "—"}</dd></div>
+                <div>
+                  <dt className="text-muted-foreground">বয়স</dt>
+                  <dd>
+                    {[
+                      studentRow.age_year ? `${studentRow.age_year} বছর` : null,
+                      studentRow.age_month ? `${studentRow.age_month} মাস` : null,
+                      studentRow.age_day ? `${studentRow.age_day} দিন` : null
+                    ]
+                      .filter(Boolean)
+                      .join(" ") || "—"}
+                  </dd>
+                </div>
+                <div><dt className="text-muted-foreground">লিঙ্গ</dt><dd>{genderOptions.find((o) => o.value === studentRow.gender)?.label || "—"}</dd></div>
+              </dl>
+            </div>
+
+            {/* 4. পিতার তথ্য */}
+            <div className="rounded-md border p-4">
+              <h3 className="mb-3 font-semibold text-lg">৪. পিতার তথ্য</h3>
+              <dl className="grid gap-3 text-sm md:grid-cols-3">
+                <div><dt className="text-muted-foreground">পিতার নাম বাংলা</dt><dd>{studentRow.father_name_bn || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">পিতার নাম ইংরেজি</dt><dd>{studentRow.father_name_en || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">পিতার এনআইডি নম্বর</dt><dd>{studentRow.father_nid || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">মোবাইল নম্বর ১</dt><dd>{studentRow.father_mobile_1 || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">মোবাইল নম্বর ২</dt><dd>{studentRow.father_mobile_2 || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">পেশা</dt><dd>{studentRow.father_occupation || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">শিক্ষাগত যোগ্যতা</dt><dd>{studentRow.father_education || "—"}</dd></div>
+              </dl>
+            </div>
+
+            {/* 5. মাতার তথ্য */}
+            <div className="rounded-md border p-4">
+              <h3 className="mb-3 font-semibold text-lg">৫. মাতার তথ্য</h3>
+              <dl className="grid gap-3 text-sm md:grid-cols-3">
+                <div><dt className="text-muted-foreground">মাতার নাম বাংলা</dt><dd>{studentRow.mother_name_bn || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">মাতার নাম ইংরেজি</dt><dd>{studentRow.mother_name_en || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">মাতার এনআইডি নম্বর</dt><dd>{studentRow.mother_nid || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">মোবাইল নম্বর ১</dt><dd>{studentRow.mother_mobile_1 || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">মোবাইল নম্বর ২</dt><dd>{studentRow.mother_mobile_2 || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">পেশা</dt><dd>{studentRow.mother_occupation || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">শিক্ষাগত যোগ্যতা</dt><dd>{studentRow.mother_education || "—"}</dd></div>
+              </dl>
+            </div>
+
+            {/* 6. বর্তমান ঠিকানা */}
+            <div className="rounded-md border p-4">
+              <h3 className="mb-3 font-semibold text-lg">৬. বর্তমান ঠিকানা</h3>
+              <dl className="grid gap-3 text-sm md:grid-cols-3">
+                <div><dt className="text-muted-foreground">গ্রাম</dt><dd>{studentRow.present_village || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">ডাকঘর</dt><dd>{studentRow.present_post_office || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">পোস্ট কোড</dt><dd>{studentRow.present_post_code || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">থানা / উপজেলা</dt><dd>{studentRow.present_upazila || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">জেলা</dt><dd>{studentRow.present_district || "—"}</dd></div>
+              </dl>
+            </div>
+
+            {/* 7. স্থায়ী ঠিকানা */}
+            <div className="rounded-md border p-4">
+              <h3 className="mb-3 font-semibold text-lg">৭. স্থায়ী ঠিকানা</h3>
+              <dl className="grid gap-3 text-sm md:grid-cols-3">
+                <div><dt className="text-muted-foreground">গ্রাম</dt><dd>{studentRow.permanent_village || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">ডাকঘর</dt><dd>{studentRow.permanent_post_office || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">পোস্ট কোড</dt><dd>{studentRow.permanent_post_code || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">থানা / উপজেলা</dt><dd>{studentRow.permanent_upazila || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">জেলা</dt><dd>{studentRow.permanent_district || "—"}</dd></div>
+              </dl>
+            </div>
+          </div>
         </AccordionItem>
         <AccordionItem title={t("Hajira / Attendance")}>
           <div className="mb-3 flex gap-2 text-sm">

@@ -28,13 +28,13 @@ export default async function StudentsPage({
     (() => {
       let query = supabase
         .from("students")
-        .select("id,name,roll,session_year,status,classes(name),sections(name)", {
+        .select("id,name,roll,session_year,status,guardian_phone,classes(name),sections(name)", {
         count: "exact"
       })
         .order("created_at", { ascending: false })
         .range(from, to);
       if (resolvedSearchParams.q) {
-        query = query.or(`name.ilike.%${resolvedSearchParams.q}%,roll.ilike.%${resolvedSearchParams.q}%`);
+        query = query.or(`name.ilike.%${resolvedSearchParams.q}%,roll.ilike.%${resolvedSearchParams.q}%,father_name.ilike.%${resolvedSearchParams.q}%,mother_name.ilike.%${resolvedSearchParams.q}%,guardian_phone.ilike.%${resolvedSearchParams.q}%`);
       }
       if (resolvedSearchParams.class) query = query.eq("class_id", resolvedSearchParams.class);
       if (resolvedSearchParams.status) query = query.eq("status", resolvedSearchParams.status);
@@ -86,6 +86,7 @@ export default async function StudentsPage({
                   <Th>{t("Class")}</Th>
                   <Th>{t("Section")}</Th>
                   <Th>{t("Session")}</Th>
+                  <Th>{t("Phone")}</Th>
                   <Th>{t("Status")}</Th>
                   <Th>{t("Actions")}</Th>
                 </tr>
@@ -98,6 +99,7 @@ export default async function StudentsPage({
                     <Td>{student.classes?.name ?? "-"}</Td>
                     <Td>{student.sections?.name ?? "-"}</Td>
                     <Td>{student.session_year}</Td>
+                    <Td>{student.guardian_phone ?? "-"}</Td>
                     <Td>
                       <Badge value={student.status} />
                     </Td>
