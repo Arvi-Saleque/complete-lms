@@ -7,7 +7,7 @@ import { normalizeBanglaText } from "@/lib/bangla/bijoy-to-unicode";
 import { deleteAllSchoolData, insertDemoPreset } from "@/lib/demo-preset";
 import { calculateSubjectGrade } from "@/lib/results";
 import { createClient } from "@/lib/supabase/server";
-import { emptyToNull, todayIso, toNumber } from "@/lib/utils";
+import { emptyToNull, todayIso, toNumber, parseOptionalInteger } from "@/lib/utils";
 
 function feeStatus(amount: number, discount: number, paid: number) {
   const due = Math.max(amount - discount - paid, 0);
@@ -130,43 +130,200 @@ export async function deleteDemoPresetAction() {
   redirect("/admin/dashboard?demo=deleted-all");
 }
 
-export async function createStudentAction(formData: FormData) {
-  await requirePrincipal();
-  const supabase = await createClient();
-  const classId = String(formData.get("class_id"));
-  const sectionId = emptyToNull(formData.get("section_id"));
+function getBangla(formData: FormData, key: string, existing?: any) {
+  if (!formData.has(key)) return existing ? existing[key] : null;
+  return emptyToNull(normalizeBanglaText(formData.get(key)));
+}
 
-  if (!(await sectionBelongsToClass(supabase, classId, sectionId))) {
-    redirect("/admin/students/new?error=section-class-mismatch");
+function isValidDate(dateStr?: string | null) {
+  if (!dateStr) return true;
+  const ts = Date.parse(dateStr);
+  return !isNaN(ts);
+}
+
+function getString(formData: FormData, key: string, existing?: any) {
+  if (!formData.has(key)) return existing ? existing[key] : null;
+  return emptyToNull(formData.get(key));
+}
+
+function getInt(formData: FormData, key: string, existing?: any) {
+  if (!formData.has(key)) return existing ? existing[key] : null;
+  return parseOptionalInteger(formData.get(key));
+}
+
+function getBool(formData: FormData, key: string, existing?: any) {
+  if (!formData.has(key)) return existing ? existing[key] : false;
+  return formData.get(key) === "true";
+}
+
+function buildStudentPayload(formData: FormData, existingStudent?: any) {
+  const sameAsPresent = getBool(formData, "same_as_present_address", existingStudent);
+
+  const classId = formData.has("class_id") ? String(formData.get("class_id")) : existingStudent?.class_id;
+  const sectionId = formData.has("section_id") ? emptyToNull(formData.get("section_id")) : existingStudent?.section_id;
+  const sessionYear = formData.has("session_year") ? String(formData.get("session_year")).trim() : existingStudent?.session_year;
+  const roll = formData.has("roll") ? String(formData.get("roll")).trim() : existingStudent?.roll;
+  const status = formData.has("status") ? String(formData.get("status")) : existingStudent?.status;
+  const admissionDate = getString(formData, "admission_date", existingStudent);
+
+  const student_name_bn = getBangla(formData, "student_name_bn", existingStudent);
+  const student_name_en = getString(formData, "student_name_en", existingStudent);
+  
+  const present_village = getBangla(formData, "present_village", existingStudent);
+  const present_post_office = getBangla(formData, "present_post_office", existingStudent);
+  const present_post_code = getString(formData, "present_post_code", existingStudent);
+  const present_upazila = getBangla(formData, "present_upazila", existingStudent);
+  const present_district = getBangla(formData, "present_district", existingStudent);
+
+  const father_name_bn = getBangla(formData, "father_name_bn", existingStudent);
+  const father_name_en = getString(formData, "father_name_en", existingStudent);
+  const mother_name_bn = getBangla(formData, "mother_name_bn", existingStudent);
+  const mother_name_en = getString(formData, "mother_name_en", existingStudent);
+  const father_mobile_1 = getString(formData, "father_mobile_1", existingStudent);
+  const father_mobile_2 = getString(formData, "father_mobile_2", existingStudent);
+  const mother_mobile_1 = getString(formData, "mother_mobile_1", existingStudent);
+  const mother_mobile_2 = getString(formData, "mother_mobile_2", existingStudent);
+
+  const fallbackName = formData.has("name") ? getBangla(formData, "name", existingStudent) : existingStudent?.name;
+  const derivedName = student_name_bn ?? student_name_en ?? fallbackName;
+  
+  if (!derivedName) {
+    return { error: "name-required" };
+  }
+
+  const dob = getString(formData, "date_of_birth", existingStudent);
+  if (!isValidDate(dob)) return { error: "invalid-dob" };
+
+  if (!isValidDate(admissionDate)) return { error: "invalid-admission-date" };
+
+  const classStartDate = getString(formData, "class_start_date", existingStudent);
+  if (!isValidDate(classStartDate)) return { error: "invalid-class-start-date" };
+
+  const age_year = getInt(formData, "age_year", existingStudent);
+  if (age_year !== null && (age_year < 0 || age_year > 120)) return { error: "invalid-age-year" };
+
+  const age_month = getInt(formData, "age_month", existingStudent);
+  if (age_month !== null && (age_month < 0 || age_month > 12)) return { error: "invalid-age-month" };
+
+  const age_day = getInt(formData, "age_day", existingStudent);
+  if (age_day !== null && (age_day < 0 || age_day > 31)) return { error: "invalid-age-day" };
+
+  const gender = getString(formData, "gender", existingStudent);
+  if (gender !== null && !["male", "female"].includes(gender)) return { error: "invalid-gender" };
+
+  const residential_type = getString(formData, "residential_type", existingStudent);
+  const validRes = ["residential", "non_residential", "daycare", "transport", "with_guardian"];
+  if (residential_type !== null && !validRes.includes(residential_type)) return { error: "invalid-residential-type" };
+
+  const validStatuses = ["active", "inactive", "transferred", "graduated", "left"];
+  if (status && !validStatuses.includes(status)) return { error: "invalid-status" };
+
+  const fallbackFather = formData.has("father_name") ? getBangla(formData, "father_name", existingStudent) : existingStudent?.father_name;
+  const derivedFather = father_name_bn ?? father_name_en ?? fallbackFather;
+  
+  const fallbackMother = formData.has("mother_name") ? getBangla(formData, "mother_name", existingStudent) : existingStudent?.mother_name;
+  const derivedMother = mother_name_bn ?? mother_name_en ?? fallbackMother;
+
+  const fallbackPhone = formData.has("guardian_phone") ? getString(formData, "guardian_phone", existingStudent) : existingStudent?.guardian_phone;
+  const derivedPhone = father_mobile_1 ?? mother_mobile_1 ?? father_mobile_2 ?? mother_mobile_2 ?? fallbackPhone;
+
+  let derivedAddress = existingStudent?.address;
+  if (formData.has("present_village") || formData.has("present_post_office") || formData.has("present_district") || formData.has("present_upazila") || formData.has("present_post_code")) {
+    const presentParts = [present_village, present_post_office, present_post_code, present_upazila, present_district].filter(Boolean);
+    if (presentParts.length > 0) {
+      derivedAddress = presentParts.join(", ");
+    } else {
+      derivedAddress = formData.has("address") ? getBangla(formData, "address", existingStudent) : existingStudent?.address;
+    }
+  } else {
+    derivedAddress = formData.has("address") ? getBangla(formData, "address", existingStudent) : existingStudent?.address;
   }
 
   const payload = {
-    name: normalizeBanglaText(formData.get("name")) ?? "",
-    roll: String(formData.get("roll") ?? "").trim(),
     class_id: classId,
     section_id: sectionId,
-    session_year: String(formData.get("session_year") ?? "").trim(),
-    father_name: normalizeBanglaText(formData.get("father_name")),
-    mother_name: normalizeBanglaText(formData.get("mother_name")),
-    guardian_phone: emptyToNull(formData.get("guardian_phone")),
-    address: normalizeBanglaText(formData.get("address")),
-    admission_date: emptyToNull(formData.get("admission_date")),
-    status: String(formData.get("status") ?? "active")
+    session_year: sessionYear,
+    roll: roll,
+    status: status,
+    admission_date: admissionDate,
+
+    name: derivedName,
+    father_name: derivedFather,
+    mother_name: derivedMother,
+    guardian_phone: derivedPhone,
+    address: derivedAddress,
+
+    student_name_bn,
+    student_name_en,
+    birth_certificate_no: getString(formData, "birth_certificate_no", existingStudent),
+    date_of_birth: getString(formData, "date_of_birth", existingStudent),
+    age_year: getInt(formData, "age_year", existingStudent),
+    age_month: getInt(formData, "age_month", existingStudent),
+    age_day: getInt(formData, "age_day", existingStudent),
+    gender: getString(formData, "gender", existingStudent),
+    class_start_date: getString(formData, "class_start_date", existingStudent),
+    tracking_no: getString(formData, "tracking_no", existingStudent),
+    residential_type: getString(formData, "residential_type", existingStudent),
+    
+    father_name_bn,
+    father_name_en,
+    father_nid: getString(formData, "father_nid", existingStudent),
+    father_mobile_1,
+    father_mobile_2,
+    father_occupation: getBangla(formData, "father_occupation", existingStudent),
+    father_education: getBangla(formData, "father_education", existingStudent),
+
+    mother_name_bn,
+    mother_name_en,
+    mother_nid: getString(formData, "mother_nid", existingStudent),
+    mother_mobile_1,
+    mother_mobile_2,
+    mother_occupation: getBangla(formData, "mother_occupation", existingStudent),
+    mother_education: getBangla(formData, "mother_education", existingStudent),
+
+    present_village,
+    present_post_office,
+    present_post_code,
+    present_upazila,
+    present_district,
+
+    same_as_present_address: sameAsPresent,
+    permanent_village: sameAsPresent ? present_village : getBangla(formData, "permanent_village", existingStudent),
+    permanent_post_office: sameAsPresent ? present_post_office : getBangla(formData, "permanent_post_office", existingStudent),
+    permanent_post_code: sameAsPresent ? present_post_code : getString(formData, "permanent_post_code", existingStudent),
+    permanent_upazila: sameAsPresent ? present_upazila : getBangla(formData, "permanent_upazila", existingStudent),
+    permanent_district: sameAsPresent ? present_district : getBangla(formData, "permanent_district", existingStudent)
   };
+
+  return { payload };
+}
+
+export async function createStudentAction(formData: FormData) {
+  await requirePrincipal();
+  const supabase = await createClient();
+
+  const { payload, error: payloadError } = buildStudentPayload(formData);
+  if (payloadError) {
+    redirect(`/admin/students/new?error=${payloadError}`);
+  }
+
+  if (!(await sectionBelongsToClass(supabase, payload!.class_id, payload!.section_id))) {
+    redirect("/admin/students/new?error=section-class-mismatch");
+  }
 
   if (
     await studentRollExists(
       supabase,
-      payload.roll,
-      payload.class_id,
-      payload.section_id,
-      payload.session_year
+      payload!.roll,
+      payload!.class_id,
+      payload!.section_id,
+      payload!.session_year
     )
   ) {
     redirect("/admin/students/new?error=roll-exists");
   }
 
-  const { error } = await supabase.from("students").insert(payload);
+  const { error } = await supabase.from("students").insert(payload!);
   if (error) throw new Error(error.message);
 
   revalidatePath("/admin/students");
@@ -176,41 +333,33 @@ export async function createStudentAction(formData: FormData) {
 export async function updateStudentAction(id: string, formData: FormData) {
   await requirePrincipal();
   const supabase = await createClient();
-  const classId = String(formData.get("class_id"));
-  const sectionId = emptyToNull(formData.get("section_id"));
 
-  if (!(await sectionBelongsToClass(supabase, classId, sectionId))) {
-    redirect(`/admin/students/${id}/edit?error=section-class-mismatch`);
+  const { data: existingStudent } = await supabase.from("students").select("*").eq("id", id).single();
+  if (!existingStudent) throw new Error("Student not found");
+
+  const { payload, error: payloadError } = buildStudentPayload(formData, existingStudent);
+  if (payloadError) {
+    redirect(`/admin/students/${id}/edit?error=${payloadError}`);
   }
 
-  const payload = {
-    name: normalizeBanglaText(formData.get("name")) ?? "",
-    roll: String(formData.get("roll") ?? "").trim(),
-    class_id: classId,
-    section_id: sectionId,
-    session_year: String(formData.get("session_year") ?? "").trim(),
-    father_name: normalizeBanglaText(formData.get("father_name")),
-    mother_name: normalizeBanglaText(formData.get("mother_name")),
-    guardian_phone: emptyToNull(formData.get("guardian_phone")),
-    address: normalizeBanglaText(formData.get("address")),
-    admission_date: emptyToNull(formData.get("admission_date")),
-    status: String(formData.get("status") ?? "active")
-  };
+  if (!(await sectionBelongsToClass(supabase, payload!.class_id, payload!.section_id))) {
+    redirect(`/admin/students/${id}/edit?error=section-class-mismatch`);
+  }
 
   if (
     await studentRollExists(
       supabase,
-      payload.roll,
-      payload.class_id,
-      payload.section_id,
-      payload.session_year,
+      payload!.roll,
+      payload!.class_id,
+      payload!.section_id,
+      payload!.session_year,
       id
     )
   ) {
     redirect(`/admin/students/${id}/edit?error=roll-exists`);
   }
 
-  const { error } = await supabase.from("students").update(payload).eq("id", id);
+  const { error } = await supabase.from("students").update(payload!).eq("id", id);
   if (error) throw new Error(error.message);
 
   revalidatePath("/admin/students");
