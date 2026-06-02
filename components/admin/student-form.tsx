@@ -63,10 +63,10 @@ export function StudentForm({
 
       <BanglaInputHelp />
 
-      {/* 1. ফরম ও শ্রেণী তথ্য */}
+      {/* 1. ফরম ও শ্রেণির তথ্য */}
       <Card>
         <CardHeader>
-          <CardTitle>১. ফরম ও শ্রেণী তথ্য</CardTitle>
+          <CardTitle>১. ফরম ও শ্রেণির তথ্য</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
@@ -180,16 +180,16 @@ export function StudentForm({
           </div>
           <div className="grid grid-cols-3 gap-2">
             <div className="space-y-2">
-              <Label htmlFor="age_year">বয়স - বছর</Label>
-              <Input id="age_year" name="age_year" type="number" defaultValue={student?.age_year ?? ""} />
+              <Label htmlFor="age_day">দিন</Label>
+              <Input id="age_day" name="age_day" type="number" defaultValue={student?.age_day ?? ""} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="age_month">মাস</Label>
               <Input id="age_month" name="age_month" type="number" defaultValue={student?.age_month ?? ""} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="age_day">দিন</Label>
-              <Input id="age_day" name="age_day" type="number" defaultValue={student?.age_day ?? ""} />
+              <Label htmlFor="age_year">বছর</Label>
+              <Input id="age_year" name="age_year" type="number" defaultValue={student?.age_year ?? ""} />
             </div>
           </div>
           <div className="space-y-2">
@@ -233,12 +233,21 @@ export function StudentForm({
             <Input id="father_mobile_3" name="father_mobile_3" defaultValue={student?.father_mobile_3 ?? ""} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="father_whatsapp_number">হোয়াটসঅ্যাপ আছে যে নম্বরে: ১ / ২ / ৩</Label>
-            <Input id="father_whatsapp_number" name="father_whatsapp_number" defaultValue={student?.father_whatsapp_number ?? ""} />
+            <Label htmlFor="father_whatsapp_number">হোয়াটসঅ্যাপ আছে যে নম্বরে</Label>
+            <Select id="father_whatsapp_number" name="father_whatsapp_number" defaultValue={student?.father_whatsapp_number ?? ""}>
+              <option value="">নির্বাচন করুন</option>
+              <option value="1">১</option>
+              <option value="2">২</option>
+              <option value="3">৩</option>
+            </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="father_profession_type">পিতার পেশা</Label>
-            <BanglaInput id="father_profession_type" name="father_profession_type" defaultValue={student?.father_profession_type ?? student?.father_occupation ?? ""} />
+            <Label htmlFor="father_profession_type">পিতার অবস্থান</Label>
+            <Select id="father_profession_type" name="father_profession_type" defaultValue={student?.father_profession_type ?? ""}>
+              <option value="">পিতার অবস্থান নির্বাচন করুন</option>
+              <option value="local">দেশে</option>
+              <option value="abroad">প্রবাসে</option>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="father_profession_details">পেশার বিবরণ</Label>

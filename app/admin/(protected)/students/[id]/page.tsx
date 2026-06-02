@@ -174,9 +174,9 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
               </dl>
             </div>
 
-            {/* 2. ফরম ও শ্রেণী তথ্য */}
+            {/* 2. ফরম ও শ্রেণির তথ্য */}
             <div className="rounded-md border p-4">
-              <h3 className="mb-3 font-semibold text-lg">২. ফরম ও শ্রেণী তথ্য</h3>
+              <h3 className="mb-3 font-semibold text-lg">২. ফরম ও শ্রেণির তথ্য</h3>
               <dl className="grid gap-3 text-sm md:grid-cols-3">
                 <div><dt className="text-muted-foreground">ট্র্যাকিং নম্বর</dt><dd>{studentRow.tracking_no || "—"}</dd></div>
                 <div><dt className="text-muted-foreground">ফরম গ্রহণের তারিখ</dt><dd>{studentRow.form_received_date || "—"}</dd></div>
@@ -186,7 +186,6 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
                 <div><dt className="text-muted-foreground">সেশন / বছর</dt><dd>{studentRow.session_year || "—"}</dd></div>
                 <div><dt className="text-muted-foreground">রোল</dt><dd>{studentRow.roll || "—"}</dd></div>
                 <div><dt className="text-muted-foreground">স্ট্যাটাস</dt><dd><Badge value={studentRow.status} /></dd></div>
-                <div><dt className="text-muted-foreground">ক্লাস শুরুর তারিখ</dt><dd>{studentRow.class_start_date || "—"}</dd></div>
                 <div><dt className="text-muted-foreground">আবাসিক ধরন</dt><dd>{residentialTypeOptions.find((o) => o.value === studentRow.residential_type)?.label || "—"}</dd></div>
               </dl>
             </div>
@@ -203,9 +202,9 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
                   <dt className="text-muted-foreground">বয়স</dt>
                   <dd>
                     {[
-                      studentRow.age_year ? `${studentRow.age_year} বছর` : null,
+                      studentRow.age_day ? `${studentRow.age_day} দিন` : null,
                       studentRow.age_month ? `${studentRow.age_month} মাস` : null,
-                      studentRow.age_day ? `${studentRow.age_day} দিন` : null
+                      studentRow.age_year ? `${studentRow.age_year} বছর` : null
                     ]
                       .filter(Boolean)
                       .join(" ") || "—"}
@@ -226,7 +225,7 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
                 <div><dt className="text-muted-foreground">মোবাইল নং-২</dt><dd>{studentRow.father_mobile_2 || "—"}</dd></div>
                 <div><dt className="text-muted-foreground">মোবাইল নং-৩</dt><dd>{studentRow.father_mobile_3 || "—"}</dd></div>
                 <div><dt className="text-muted-foreground">হোয়াটসঅ্যাপ আছে যে নম্বরে</dt><dd>{studentRow.father_whatsapp_number || "—"}</dd></div>
-                <div><dt className="text-muted-foreground">পিতার পেশা</dt><dd>{studentRow.father_profession_type || studentRow.father_occupation || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">পিতার অবস্থান</dt><dd>{studentRow.father_profession_type === "local" ? "দেশে" : studentRow.father_profession_type === "abroad" ? "প্রবাসে" : (studentRow.father_profession_type || studentRow.father_occupation || "—")}</dd></div>
                 <div><dt className="text-muted-foreground">পেশার বিবরণ</dt><dd>{studentRow.father_profession_details || "—"}</dd></div>
                 <div><dt className="text-muted-foreground">শিক্ষাগত যোগ্যতা</dt><dd>{studentRow.father_education || "—"}</dd></div>
               </dl>
