@@ -61,6 +61,9 @@ create table public.students (
   class_start_date date,
   tracking_no text,
   residential_type text,
+  
+  form_received_date date,
+  form_submitted_date date,
 
   -- Father
   father_name_bn text,
@@ -68,16 +71,22 @@ create table public.students (
   father_nid text,
   father_mobile_1 text,
   father_mobile_2 text,
+  father_mobile_3 text,
+  father_whatsapp_number text,
   father_occupation text,
+  father_profession_type text,
+  father_profession_details text,
   father_education text,
 
   -- Mother
   mother_name_bn text,
   mother_name_en text,
   mother_nid text,
+  mother_mobile text,
   mother_mobile_1 text,
   mother_mobile_2 text,
   mother_occupation text,
+  mother_profession_type text,
   mother_education text,
 
   -- Present address
@@ -93,6 +102,12 @@ create table public.students (
   permanent_post_code text,
   permanent_upazila text,
   permanent_district text,
+
+  -- Documents
+  docs_birth_certificate boolean default false,
+  docs_previous_marksheet boolean default false,
+  docs_guardian_photo boolean default false,
+  docs_guardian_nid boolean default false,
 
   -- Other
   same_as_present_address boolean default false,

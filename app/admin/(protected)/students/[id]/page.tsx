@@ -174,12 +174,18 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
               </dl>
             </div>
 
-            {/* 2. ভর্তি / একাডেমিক তথ্য */}
+            {/* 2. ফরম ও শ্রেণী তথ্য */}
             <div className="rounded-md border p-4">
-              <h3 className="mb-3 font-semibold text-lg">২. ভর্তি / একাডেমিক তথ্য</h3>
+              <h3 className="mb-3 font-semibold text-lg">২. ফরম ও শ্রেণী তথ্য</h3>
               <dl className="grid gap-3 text-sm md:grid-cols-3">
                 <div><dt className="text-muted-foreground">ট্র্যাকিং নম্বর</dt><dd>{studentRow.tracking_no || "—"}</dd></div>
-                <div><dt className="text-muted-foreground">ভর্তির তারিখ</dt><dd>{studentRow.admission_date || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">ফরম গ্রহণের তারিখ</dt><dd>{studentRow.form_received_date || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">ফরম জমা দেওয়ার তারিখ</dt><dd>{studentRow.form_submitted_date || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">ভর্তির শ্রেণী</dt><dd>{studentRow.classes?.name || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">শাখা</dt><dd>{studentRow.sections?.name || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">সেশন / বছর</dt><dd>{studentRow.session_year || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">রোল</dt><dd>{studentRow.roll || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">স্ট্যাটাস</dt><dd><Badge value={studentRow.status} /></dd></div>
                 <div><dt className="text-muted-foreground">ক্লাস শুরুর তারিখ</dt><dd>{studentRow.class_start_date || "—"}</dd></div>
                 <div><dt className="text-muted-foreground">আবাসিক ধরন</dt><dd>{residentialTypeOptions.find((o) => o.value === studentRow.residential_type)?.label || "—"}</dd></div>
               </dl>
@@ -216,9 +222,12 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
                 <div><dt className="text-muted-foreground">পিতার নাম বাংলা</dt><dd>{studentRow.father_name_bn || "—"}</dd></div>
                 <div><dt className="text-muted-foreground">পিতার নাম ইংরেজি</dt><dd>{studentRow.father_name_en || "—"}</dd></div>
                 <div><dt className="text-muted-foreground">পিতার এনআইডি নম্বর</dt><dd>{studentRow.father_nid || "—"}</dd></div>
-                <div><dt className="text-muted-foreground">মোবাইল নম্বর ১</dt><dd>{studentRow.father_mobile_1 || "—"}</dd></div>
-                <div><dt className="text-muted-foreground">মোবাইল নম্বর ২</dt><dd>{studentRow.father_mobile_2 || "—"}</dd></div>
-                <div><dt className="text-muted-foreground">পেশা</dt><dd>{studentRow.father_occupation || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">মোবাইল নং-১</dt><dd>{studentRow.father_mobile_1 || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">মোবাইল নং-২</dt><dd>{studentRow.father_mobile_2 || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">মোবাইল নং-৩</dt><dd>{studentRow.father_mobile_3 || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">হোয়াটসঅ্যাপ আছে যে নম্বরে</dt><dd>{studentRow.father_whatsapp_number || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">পিতার পেশা</dt><dd>{studentRow.father_profession_type || studentRow.father_occupation || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">পেশার বিবরণ</dt><dd>{studentRow.father_profession_details || "—"}</dd></div>
                 <div><dt className="text-muted-foreground">শিক্ষাগত যোগ্যতা</dt><dd>{studentRow.father_education || "—"}</dd></div>
               </dl>
             </div>
@@ -230,9 +239,8 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
                 <div><dt className="text-muted-foreground">মাতার নাম বাংলা</dt><dd>{studentRow.mother_name_bn || "—"}</dd></div>
                 <div><dt className="text-muted-foreground">মাতার নাম ইংরেজি</dt><dd>{studentRow.mother_name_en || "—"}</dd></div>
                 <div><dt className="text-muted-foreground">মাতার এনআইডি নম্বর</dt><dd>{studentRow.mother_nid || "—"}</dd></div>
-                <div><dt className="text-muted-foreground">মোবাইল নম্বর ১</dt><dd>{studentRow.mother_mobile_1 || "—"}</dd></div>
-                <div><dt className="text-muted-foreground">মোবাইল নম্বর ২</dt><dd>{studentRow.mother_mobile_2 || "—"}</dd></div>
-                <div><dt className="text-muted-foreground">পেশা</dt><dd>{studentRow.mother_occupation || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">মোবাইল নং</dt><dd>{studentRow.mother_mobile || studentRow.mother_mobile_1 || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">মায়ের পেশা</dt><dd>{studentRow.mother_profession_type || studentRow.mother_occupation || "—"}</dd></div>
                 <div><dt className="text-muted-foreground">শিক্ষাগত যোগ্যতা</dt><dd>{studentRow.mother_education || "—"}</dd></div>
               </dl>
             </div>
@@ -242,8 +250,8 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
               <h3 className="mb-3 font-semibold text-lg">৬. বর্তমান ঠিকানা</h3>
               <dl className="grid gap-3 text-sm md:grid-cols-3">
                 <div><dt className="text-muted-foreground">গ্রাম</dt><dd>{studentRow.present_village || "—"}</dd></div>
-                <div><dt className="text-muted-foreground">ডাকঘর</dt><dd>{studentRow.present_post_office || "—"}</dd></div>
-                <div><dt className="text-muted-foreground">পোস্ট কোড</dt><dd>{studentRow.present_post_code || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">পোস্ট</dt><dd>{studentRow.present_post_office || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">পোস্ট ওয়ার্ড নং / ইউনিয়ন</dt><dd>{studentRow.present_post_code || "—"}</dd></div>
                 <div><dt className="text-muted-foreground">থানা / উপজেলা</dt><dd>{studentRow.present_upazila || "—"}</dd></div>
                 <div><dt className="text-muted-foreground">জেলা</dt><dd>{studentRow.present_district || "—"}</dd></div>
               </dl>
@@ -254,10 +262,21 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
               <h3 className="mb-3 font-semibold text-lg">৭. স্থায়ী ঠিকানা</h3>
               <dl className="grid gap-3 text-sm md:grid-cols-3">
                 <div><dt className="text-muted-foreground">গ্রাম</dt><dd>{studentRow.permanent_village || "—"}</dd></div>
-                <div><dt className="text-muted-foreground">ডাকঘর</dt><dd>{studentRow.permanent_post_office || "—"}</dd></div>
-                <div><dt className="text-muted-foreground">পোস্ট কোড</dt><dd>{studentRow.permanent_post_code || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">পোস্ট</dt><dd>{studentRow.permanent_post_office || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">পোস্ট ওয়ার্ড নং / ইউনিয়ন</dt><dd>{studentRow.permanent_post_code || "—"}</dd></div>
                 <div><dt className="text-muted-foreground">থানা / উপজেলা</dt><dd>{studentRow.permanent_upazila || "—"}</dd></div>
                 <div><dt className="text-muted-foreground">জেলা</dt><dd>{studentRow.permanent_district || "—"}</dd></div>
+              </dl>
+            </div>
+
+            {/* 8. সংযুক্ত কাগজ-পত্র */}
+            <div className="rounded-md border p-4">
+              <h3 className="mb-3 font-semibold text-lg">৮. সংযুক্ত কাগজ-পত্র</h3>
+              <dl className="grid gap-3 text-sm md:grid-cols-2 lg:grid-cols-4">
+                <div><dt className="text-muted-foreground">জন্মনিবন্ধনের কপি</dt><dd>{studentRow.docs_birth_certificate ? "✅ জমা দেওয়া হয়েছে" : "❌ দেওয়া হয়নি"}</dd></div>
+                <div><dt className="text-muted-foreground">মার্কশীটের কপি</dt><dd>{studentRow.docs_previous_marksheet ? "✅ জমা দেওয়া হয়েছে" : "❌ দেওয়া হয়নি"}</dd></div>
+                <div><dt className="text-muted-foreground">অভিভাবকের ছবি</dt><dd>{studentRow.docs_guardian_photo ? "✅ জমা দেওয়া হয়েছে" : "❌ দেওয়া হয়নি"}</dd></div>
+                <div><dt className="text-muted-foreground">অভিভাবকের এনআইডি</dt><dd>{studentRow.docs_guardian_nid ? "✅ জমা দেওয়া হয়েছে" : "❌ দেওয়া হয়নি"}</dd></div>
               </dl>
             </div>
           </div>

@@ -193,8 +193,12 @@ function buildStudentPayload(formData: FormData, existingStudent?: any) {
 
   const dob = getString(formData, "date_of_birth", existingStudent);
   if (!isValidDate(dob)) return { error: "invalid-dob" };
+  
+  const formReceivedDate = getString(formData, "form_received_date", existingStudent);
+  if (!isValidDate(formReceivedDate)) return { error: "invalid-form-received-date" };
 
-  if (!isValidDate(admissionDate)) return { error: "invalid-admission-date" };
+  const formSubmittedDate = getString(formData, "form_submitted_date", existingStudent);
+  if (!isValidDate(formSubmittedDate)) return { error: "invalid-form-submitted-date" };
 
   const classStartDate = getString(formData, "class_start_date", existingStudent);
   if (!isValidDate(classStartDate)) return { error: "invalid-class-start-date" };
@@ -224,8 +228,16 @@ function buildStudentPayload(formData: FormData, existingStudent?: any) {
   const fallbackMother = formData.has("mother_name") ? getBangla(formData, "mother_name", existingStudent) : existingStudent?.mother_name;
   const derivedMother = mother_name_bn ?? mother_name_en ?? fallbackMother;
 
+  const mother_mobile = getString(formData, "mother_mobile", existingStudent);
+  
   const fallbackPhone = formData.has("guardian_phone") ? getString(formData, "guardian_phone", existingStudent) : existingStudent?.guardian_phone;
-  const derivedPhone = father_mobile_1 ?? mother_mobile_1 ?? father_mobile_2 ?? mother_mobile_2 ?? fallbackPhone;
+  const derivedPhone = father_mobile_1 ?? mother_mobile_1 ?? mother_mobile ?? father_mobile_2 ?? mother_mobile_2 ?? fallbackPhone;
+
+  const permanent_village = sameAsPresent ? present_village : getBangla(formData, "permanent_village", existingStudent);
+  const permanent_post_office = sameAsPresent ? present_post_office : getBangla(formData, "permanent_post_office", existingStudent);
+  const permanent_post_code = sameAsPresent ? present_post_code : getString(formData, "permanent_post_code", existingStudent);
+  const permanent_upazila = sameAsPresent ? present_upazila : getBangla(formData, "permanent_upazila", existingStudent);
+  const permanent_district = sameAsPresent ? present_district : getBangla(formData, "permanent_district", existingStudent);
 
   let derivedAddress = existingStudent?.address;
   if (formData.has("present_village") || formData.has("present_post_office") || formData.has("present_district") || formData.has("present_upazila") || formData.has("present_post_code")) {
@@ -256,43 +268,61 @@ function buildStudentPayload(formData: FormData, existingStudent?: any) {
     student_name_bn,
     student_name_en,
     birth_certificate_no: getString(formData, "birth_certificate_no", existingStudent),
-    date_of_birth: getString(formData, "date_of_birth", existingStudent),
-    age_year: getInt(formData, "age_year", existingStudent),
-    age_month: getInt(formData, "age_month", existingStudent),
-    age_day: getInt(formData, "age_day", existingStudent),
-    gender: getString(formData, "gender", existingStudent),
-    class_start_date: getString(formData, "class_start_date", existingStudent),
+    date_of_birth: dob,
+    age_day,
+    age_month,
+    age_year,
+    gender,
+    class_start_date: classStartDate,
     tracking_no: getString(formData, "tracking_no", existingStudent),
-    residential_type: getString(formData, "residential_type", existingStudent),
+    residential_type,
     
+    form_received_date: formReceivedDate,
+    form_submitted_date: formSubmittedDate,
+
+    // Father
     father_name_bn,
     father_name_en,
     father_nid: getString(formData, "father_nid", existingStudent),
     father_mobile_1,
     father_mobile_2,
+    father_mobile_3: getString(formData, "father_mobile_3", existingStudent),
+    father_whatsapp_number: getString(formData, "father_whatsapp_number", existingStudent),
     father_occupation: getBangla(formData, "father_occupation", existingStudent),
+    father_profession_type: getBangla(formData, "father_profession_type", existingStudent),
+    father_profession_details: getBangla(formData, "father_profession_details", existingStudent),
     father_education: getBangla(formData, "father_education", existingStudent),
 
+    // Mother
     mother_name_bn,
     mother_name_en,
     mother_nid: getString(formData, "mother_nid", existingStudent),
+    mother_mobile,
     mother_mobile_1,
     mother_mobile_2,
     mother_occupation: getBangla(formData, "mother_occupation", existingStudent),
+    mother_profession_type: getBangla(formData, "mother_profession_type", existingStudent),
     mother_education: getBangla(formData, "mother_education", existingStudent),
 
+    // Addresses
     present_village,
     present_post_office,
     present_post_code,
     present_upazila,
     present_district,
 
-    same_as_present_address: sameAsPresent,
-    permanent_village: sameAsPresent ? present_village : getBangla(formData, "permanent_village", existingStudent),
-    permanent_post_office: sameAsPresent ? present_post_office : getBangla(formData, "permanent_post_office", existingStudent),
-    permanent_post_code: sameAsPresent ? present_post_code : getString(formData, "permanent_post_code", existingStudent),
-    permanent_upazila: sameAsPresent ? present_upazila : getBangla(formData, "permanent_upazila", existingStudent),
-    permanent_district: sameAsPresent ? present_district : getBangla(formData, "permanent_district", existingStudent)
+    permanent_village,
+    permanent_post_office,
+    permanent_post_code,
+    permanent_upazila,
+    permanent_district,
+    
+    docs_birth_certificate: formData.get("docs_birth_certificate") === "on",
+    docs_previous_marksheet: formData.get("docs_previous_marksheet") === "on",
+    docs_guardian_photo: formData.get("docs_guardian_photo") === "on",
+    docs_guardian_nid: formData.get("docs_guardian_nid") === "on",
+
+    same_as_present_address: sameAsPresent
   };
 
   return { payload };

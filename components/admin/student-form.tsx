@@ -63,26 +63,22 @@ export function StudentForm({
 
       <BanglaInputHelp />
 
-      {/* 1. ভর্তি / একাডেমিক তথ্য */}
+      {/* 1. ফরম ও শ্রেণী তথ্য */}
       <Card>
         <CardHeader>
-          <CardTitle>১. ভর্তি / একাডেমিক তথ্য</CardTitle>
+          <CardTitle>১. ফরম ও শ্রেণী তথ্য</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="tracking_no">ট্র্যাকিং নম্বর</Label>
-            <Input id="tracking_no" name="tracking_no" defaultValue={student?.tracking_no ?? ""} />
+            <Label htmlFor="form_received_date">ফরম গ্রহণের তারিখ</Label>
+            <Input id="form_received_date" name="form_received_date" type="date" defaultValue={student?.form_received_date?.slice(0, 10) ?? ""} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="admission_date">ভর্তির তারিখ</Label>
-            <Input id="admission_date" name="admission_date" type="date" defaultValue={student?.admission_date?.slice(0, 10) ?? ""} />
+            <Label htmlFor="form_submitted_date">ফরম জমা দেওয়ার তারিখ</Label>
+            <Input id="form_submitted_date" name="form_submitted_date" type="date" defaultValue={student?.form_submitted_date?.slice(0, 10) ?? ""} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="class_start_date">ক্লাস শুরুর তারিখ</Label>
-            <Input id="class_start_date" name="class_start_date" type="date" defaultValue={student?.class_start_date?.slice(0, 10) ?? ""} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="class_id">ক্লাস</Label>
+            <Label htmlFor="class_id">ভর্তির শ্রেণী</Label>
             <Select
               id="class_id"
               name="class_id"
@@ -225,20 +221,28 @@ export function StudentForm({
             <Input id="father_nid" name="father_nid" defaultValue={student?.father_nid ?? ""} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="father_mobile_1">মোবাইল নম্বর ১</Label>
+            <Label htmlFor="father_mobile_1">মোবাইল নং-১</Label>
             <Input id="father_mobile_1" name="father_mobile_1" defaultValue={student?.father_mobile_1 ?? student?.guardian_phone ?? ""} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="father_mobile_2">মোবাইল নম্বর ২</Label>
+            <Label htmlFor="father_mobile_2">মোবাইল নং-২</Label>
             <Input id="father_mobile_2" name="father_mobile_2" defaultValue={student?.father_mobile_2 ?? ""} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="father_occupation">পেশা</Label>
-            <BanglaInput id="father_occupation" name="father_occupation" defaultValue={student?.father_occupation ?? ""} />
+            <Label htmlFor="father_mobile_3">মোবাইল নং-৩, পিতা প্রবাসী হলে</Label>
+            <Input id="father_mobile_3" name="father_mobile_3" defaultValue={student?.father_mobile_3 ?? ""} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="father_education">শিক্ষাগত যোগ্যতা</Label>
-            <BanglaInput id="father_education" name="father_education" defaultValue={student?.father_education ?? ""} />
+            <Label htmlFor="father_whatsapp_number">হোয়াটসঅ্যাপ আছে যে নম্বরে: ১ / ২ / ৩</Label>
+            <Input id="father_whatsapp_number" name="father_whatsapp_number" defaultValue={student?.father_whatsapp_number ?? ""} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="father_profession_type">পিতার পেশা</Label>
+            <BanglaInput id="father_profession_type" name="father_profession_type" defaultValue={student?.father_profession_type ?? student?.father_occupation ?? ""} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="father_profession_details">পেশার বিবরণ</Label>
+            <BanglaInput id="father_profession_details" name="father_profession_details" defaultValue={student?.father_profession_details ?? ""} />
           </div>
         </CardContent>
       </Card>
@@ -262,20 +266,12 @@ export function StudentForm({
             <Input id="mother_nid" name="mother_nid" defaultValue={student?.mother_nid ?? ""} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="mother_mobile_1">মোবাইল নম্বর ১</Label>
-            <Input id="mother_mobile_1" name="mother_mobile_1" defaultValue={student?.mother_mobile_1 ?? ""} />
+            <Label htmlFor="mother_mobile">মোবাইল নং</Label>
+            <Input id="mother_mobile" name="mother_mobile" defaultValue={student?.mother_mobile ?? student?.mother_mobile_1 ?? ""} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="mother_mobile_2">মোবাইল নম্বর ২</Label>
-            <Input id="mother_mobile_2" name="mother_mobile_2" defaultValue={student?.mother_mobile_2 ?? ""} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="mother_occupation">পেশা</Label>
-            <BanglaInput id="mother_occupation" name="mother_occupation" defaultValue={student?.mother_occupation ?? ""} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="mother_education">শিক্ষাগত যোগ্যতা</Label>
-            <BanglaInput id="mother_education" name="mother_education" defaultValue={student?.mother_education ?? ""} />
+            <Label htmlFor="mother_profession_type">মায়ের পেশা</Label>
+            <BanglaInput id="mother_profession_type" name="mother_profession_type" defaultValue={student?.mother_profession_type ?? student?.mother_occupation ?? ""} />
           </div>
         </CardContent>
       </Card>
@@ -291,11 +287,11 @@ export function StudentForm({
             <BanglaInput id="present_village" name="present_village" defaultValue={student?.present_village ?? ""} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="present_post_office">ডাকঘর</Label>
+            <Label htmlFor="present_post_office">পোস্ট</Label>
             <BanglaInput id="present_post_office" name="present_post_office" defaultValue={student?.present_post_office ?? ""} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="present_post_code">পোস্ট কোড</Label>
+            <Label htmlFor="present_post_code">পোস্ট ওয়ার্ড নং / ইউনিয়ন</Label>
             <Input id="present_post_code" name="present_post_code" defaultValue={student?.present_post_code ?? ""} />
           </div>
           <div className="space-y-2">
@@ -334,11 +330,11 @@ export function StudentForm({
               <BanglaInput id="permanent_village" name="permanent_village" defaultValue={student?.permanent_village ?? ""} tabIndex={sameAsPresent ? -1 : 0} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="permanent_post_office">ডাকঘর</Label>
+              <Label htmlFor="permanent_post_office">পোস্ট</Label>
               <BanglaInput id="permanent_post_office" name="permanent_post_office" defaultValue={student?.permanent_post_office ?? ""} tabIndex={sameAsPresent ? -1 : 0} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="permanent_post_code">পোস্ট কোড</Label>
+              <Label htmlFor="permanent_post_code">পোস্ট ওয়ার্ড নং / ইউনিয়ন</Label>
               <Input id="permanent_post_code" name="permanent_post_code" defaultValue={student?.permanent_post_code ?? ""} tabIndex={sameAsPresent ? -1 : 0} />
             </div>
             <div className="space-y-2">
@@ -348,6 +344,57 @@ export function StudentForm({
             <div className="space-y-2">
               <Label htmlFor="permanent_district">জেলা</Label>
               <BanglaInput id="permanent_district" name="permanent_district" defaultValue={student?.permanent_district ?? ""} tabIndex={sameAsPresent ? -1 : 0} />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 7. সংযুক্ত কাগজ-পত্র */}
+      <Card>
+        <CardHeader>
+          <CardTitle>৭. সংযুক্ত কাগজ-পত্র</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="docs_birth_certificate"
+                name="docs_birth_certificate"
+                defaultChecked={student?.docs_birth_certificate ?? false}
+                className="size-4 rounded border-gray-300"
+              />
+              <Label htmlFor="docs_birth_certificate">শিক্ষার্থীর জন্মনিবন্ধনের কপি</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="docs_previous_marksheet"
+                name="docs_previous_marksheet"
+                defaultChecked={student?.docs_previous_marksheet ?? false}
+                className="size-4 rounded border-gray-300"
+              />
+              <Label htmlFor="docs_previous_marksheet">মার্কশীট / পূর্ববর্তী ফলাফলের কপি</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="docs_guardian_photo"
+                name="docs_guardian_photo"
+                defaultChecked={student?.docs_guardian_photo ?? false}
+                className="size-4 rounded border-gray-300"
+              />
+              <Label htmlFor="docs_guardian_photo">অভিভাবকের ছবি</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="docs_guardian_nid"
+                name="docs_guardian_nid"
+                defaultChecked={student?.docs_guardian_nid ?? false}
+                className="size-4 rounded border-gray-300"
+              />
+              <Label htmlFor="docs_guardian_nid">অভিভাবকের এনআইডি কপি</Label>
             </div>
           </div>
         </CardContent>

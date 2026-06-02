@@ -27,6 +27,9 @@ export interface Student {
   class_start_date?: string | null;
   tracking_no?: string | null;
   residential_type?: string | null;
+  
+  form_received_date?: string | null;
+  form_submitted_date?: string | null;
 
   // Father
   father_name_bn?: string | null;
@@ -34,16 +37,22 @@ export interface Student {
   father_nid?: string | null;
   father_mobile_1?: string | null;
   father_mobile_2?: string | null;
+  father_mobile_3?: string | null;
+  father_whatsapp_number?: string | null;
   father_occupation?: string | null;
+  father_profession_type?: string | null;
+  father_profession_details?: string | null;
   father_education?: string | null;
 
   // Mother
   mother_name_bn?: string | null;
   mother_name_en?: string | null;
   mother_nid?: string | null;
+  mother_mobile?: string | null;
   mother_mobile_1?: string | null;
   mother_mobile_2?: string | null;
   mother_occupation?: string | null;
+  mother_profession_type?: string | null;
   mother_education?: string | null;
 
   // Present address
@@ -59,6 +68,12 @@ export interface Student {
   permanent_post_code?: string | null;
   permanent_upazila?: string | null;
   permanent_district?: string | null;
+
+  // Documents
+  docs_birth_certificate?: boolean | null;
+  docs_previous_marksheet?: boolean | null;
+  docs_guardian_photo?: boolean | null;
+  docs_guardian_nid?: boolean | null;
 
   // Other
   same_as_present_address?: boolean | null;
