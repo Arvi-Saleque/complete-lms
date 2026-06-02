@@ -13,7 +13,6 @@ export const residentialTypeOptions = [
 
 export const studentStatusOptions = [
   { value: "active", label: "সক্রিয়" },
-  { value: "inactive", label: "নিষ্ক্রিয়" },
-  { value: "transferred", label: "স্থানান্তরিত" },
+  { value: "left", label: "চলে গেছে" },
   { value: "graduated", label: "সম্পন্ন" }
 ];

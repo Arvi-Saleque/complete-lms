@@ -164,7 +164,7 @@ export function StudentForm({
         <CardContent className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="student_name_bn">শিক্ষার্থীর নাম বাংলা</Label>
-            <BanglaInput id="student_name_bn" name="student_name_bn" required defaultValue={student?.student_name_bn ?? student?.name ?? ""} />
+            <BanglaInput id="student_name_bn" name="student_name_bn" defaultValue={student?.student_name_bn ?? student?.name ?? ""} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="student_name_en">শিক্ষার্থীর নাম ইংরেজি</Label>

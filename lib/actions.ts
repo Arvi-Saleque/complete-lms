@@ -164,7 +164,6 @@ function buildStudentPayload(formData: FormData, existingStudent?: any) {
   const sessionYear = formData.has("session_year") ? String(formData.get("session_year")).trim() : existingStudent?.session_year;
   const roll = formData.has("roll") ? String(formData.get("roll")).trim() : existingStudent?.roll;
   const status = formData.has("status") ? String(formData.get("status")) : existingStudent?.status;
-  const admissionDate = getString(formData, "admission_date", existingStudent);
 
   const student_name_bn = getBangla(formData, "student_name_bn", existingStudent);
   const student_name_en = getString(formData, "student_name_en", existingStudent);
@@ -200,9 +199,6 @@ function buildStudentPayload(formData: FormData, existingStudent?: any) {
   const formSubmittedDate = getString(formData, "form_submitted_date", existingStudent);
   if (!isValidDate(formSubmittedDate)) return { error: "invalid-form-submitted-date" };
 
-  const classStartDate = getString(formData, "class_start_date", existingStudent);
-  if (!isValidDate(classStartDate)) return { error: "invalid-class-start-date" };
-
   const age_year = getInt(formData, "age_year", existingStudent);
   if (age_year !== null && (age_year < 0 || age_year > 120)) return { error: "invalid-age-year" };
 
@@ -219,7 +215,7 @@ function buildStudentPayload(formData: FormData, existingStudent?: any) {
   const validRes = ["residential", "non_residential", "daycare", "transport", "with_guardian"];
   if (residential_type !== null && !validRes.includes(residential_type)) return { error: "invalid-residential-type" };
 
-  const validStatuses = ["active", "inactive", "transferred", "graduated", "left"];
+  const validStatuses = ["active", "left", "graduated"];
   if (status && !validStatuses.includes(status)) return { error: "invalid-status" };
 
   const fallbackFather = formData.has("father_name") ? getBangla(formData, "father_name", existingStudent) : existingStudent?.father_name;
@@ -257,7 +253,6 @@ function buildStudentPayload(formData: FormData, existingStudent?: any) {
     session_year: sessionYear,
     roll: roll,
     status: status,
-    admission_date: admissionDate,
 
     name: derivedName,
     father_name: derivedFather,
@@ -273,7 +268,6 @@ function buildStudentPayload(formData: FormData, existingStudent?: any) {
     age_month,
     age_year,
     gender,
-    class_start_date: classStartDate,
     tracking_no: getString(formData, "tracking_no", existingStudent),
     residential_type,
     
