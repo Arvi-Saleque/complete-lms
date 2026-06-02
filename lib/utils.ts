@@ -71,7 +71,15 @@ export function toNumber(value: FormDataEntryValue | null) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-export function emptyToNull(value: FormDataEntryValue | null) {
-  const text = String(value ?? "").trim();
-  return text.length ? text : null;
+export function emptyToNull(value: FormDataEntryValue | string | null | undefined) {
+  if (value === null || value === undefined) return null;
+  const text = String(value).trim();
+  return text.length > 0 ? text : null;
+}
+
+export function parseOptionalInteger(value: FormDataEntryValue | string | null | undefined) {
+  const text = emptyToNull(value);
+  if (text === null) return null;
+  const parsed = Number(text);
+  return Number.isInteger(parsed) ? parsed : null;
 }

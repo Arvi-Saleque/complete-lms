@@ -48,6 +48,54 @@ create table public.students (
   guardian_phone text,
   address text,
   admission_date date,
+  
+  -- New detailed optional fields
+  student_name_bn text,
+  student_name_en text,
+  birth_certificate_no text,
+  date_of_birth date,
+  age_day integer,
+  age_month integer,
+  age_year integer,
+  gender text,
+  class_start_date date,
+  tracking_no text,
+  residential_type text,
+
+  -- Father
+  father_name_bn text,
+  father_name_en text,
+  father_nid text,
+  father_mobile_1 text,
+  father_mobile_2 text,
+  father_occupation text,
+  father_education text,
+
+  -- Mother
+  mother_name_bn text,
+  mother_name_en text,
+  mother_nid text,
+  mother_mobile_1 text,
+  mother_mobile_2 text,
+  mother_occupation text,
+  mother_education text,
+
+  -- Present address
+  present_village text,
+  present_post_office text,
+  present_post_code text,
+  present_upazila text,
+  present_district text,
+
+  -- Permanent address
+  permanent_village text,
+  permanent_post_office text,
+  permanent_post_code text,
+  permanent_upazila text,
+  permanent_district text,
+
+  -- Other
+  same_as_present_address boolean default false,
   status public.student_status not null default 'active',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
